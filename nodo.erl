@@ -17,8 +17,48 @@ print_compartidos() ->
             io:format("Archivos compartidos: ~p~n", [Archivos])
     end.
 
+get_id(Id) ->
+    receive
+        {id, Pid} -> Pid ! {ok, Id}
+    end,
+    get_id(Id).    
+
+cli() ->
+    case io:get_line("> ") of
+        "id_nodo\n" ->
+            getId ! {id, self()},
+            receive
+                {ok, Id} -> io:format("ID del nodo: ~p~n", [Id])
+            end,
+            cli();
+        "listar_descargas\n" ->
+            print_descargas(),
+            cli();
+        "listar_compartidosos\n" ->
+            print_compartidos(),
+            cli();
+        "salir\n" ->
+            io:format("Saliendo...~n"),
+            ok;
+        "help\n" ->
+            io:format("Comandos disponibles:~n"),
+            io:format("  id_nodo - Muestra el ID del nodo~n"),
+            io:format("  listar_descargas - Lista los archivos descargados~n"),
+            io:format("  listar_compartidosos - Lista los archivos compartidos~n"),
+            io:format("  salir - Salir del programa~n"),
+            cli();
+        _ ->
+            io:format("Comando no reconocido.~n"),
+            cli()
+    end.
+
 init(Id) ->
     io:format("Hola soy el nodo ~p~n", [Id]),
-    print_compartidos(),
-    print_descargas(),
-    spawn(sv:start()).
+    spawn(fun() -> sv:start() end),
+    
+    GetIdPid = spawn(fun() -> get_id(Id) end),
+    register(getId, GetIdPid),
+
+    cli().
+    % print_compartidos(),
+    % print_descargas().

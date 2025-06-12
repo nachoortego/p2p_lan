@@ -1,5 +1,5 @@
-all: nodo
-	erl -s nodo init 1
+# all: nodo
+# 	erl -s nodo init 1
 
 nodo: listar_archivos sv
 	erlc nodo.erl
