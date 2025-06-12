@@ -1,4 +1,4 @@
--module(sv).
+-module(listen).
 -export([start/0]).
 
 start() ->
@@ -9,6 +9,12 @@ wait_connect(ListenSocket, N) ->
     io:fwrite("Escuchando...~n", []),
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     spawn (fun () -> wait_connect (ListenSocket, N+1) end),
+    node_register(Socket).
+
+node_register(Socket) ->
+    receive
+        {ok, NodeId} -> knownNodes ! {new, NodeId}
+    end,
     get_request(Socket).
 
 get_request(Socket) ->

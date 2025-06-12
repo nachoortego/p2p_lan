@@ -1,64 +1,31 @@
 -module(nodo).
 -export([init/1]).
 
-print_descargas() -> 
-    case listar_archivos:listar("Descargas") of
-        {error, Reason} -> 
-            io:format("Error: ~s~n", [Reason]);
-        Archivos -> 
-            io:format("Archivos descargados: ~p~n", [Archivos])
-    end.
-
-print_compartidos() -> 
-    case listar_archivos:listar("Compartida") of
-        {error, Reason} -> 
-            io:format("Error: ~s~n", [Reason]);
-        Archivos -> 
-            io:format("Archivos compartidos: ~p~n", [Archivos])
-    end.
-
 get_id(Id) ->
     receive
         {id, Pid} -> Pid ! {ok, Id}
     end,
-    get_id(Id).    
+    get_id(Id).
 
-cli() ->
-    case io:get_line("> ") of
-        "id_nodo\n" ->
-            getId ! {id, self()},
-            receive
-                {ok, Id} -> io:format("ID del nodo: ~p~n", [Id])
-            end,
-            cli();
-        "listar_descargas\n" ->
-            print_descargas(),
-            cli();
-        "listar_compartidosos\n" ->
-            print_compartidos(),
-            cli();
-        "salir\n" ->
-            io:format("Saliendo...~n"),
-            ok;
-        "help\n" ->
-            io:format("Comandos disponibles:~n"),
-            io:format("  id_nodo - Muestra el ID del nodo~n"),
-            io:format("  listar_descargas - Lista los archivos descargados~n"),
-            io:format("  listar_compartidosos - Lista los archivos compartidos~n"),
-            io:format("  salir - Salir del programa~n"),
-            cli();
-        _ ->
-            io:format("Comando no reconocido.~n"),
-            cli()
+known_nodes(NodeList) ->
+    receive
+        {new, NodeId} ->
+            case lists:member(NodeId, NodeList) of
+                true -> known_nodes(NodeList);
+                false -> known_nodes([NodeId | NodeList])
+            end;
+        {get, NodeId} ->
+            NodeId ! {ok, NodeList},
+            known_nodes(NodeList)
     end.
 
 init(Id) ->
     io:format("Hola soy el nodo ~p~n", [Id]),
-    spawn(fun() -> sv:start() end),
+    spawn(fun() -> listen:start() end),
+    KnownNodesPid = spawn(fun() -> known_nodes([]) end),
+    register(knownNodes, KnownNodesPid),
     
     GetIdPid = spawn(fun() -> get_id(Id) end),
     register(getId, GetIdPid),
 
-    cli().
-    % print_compartidos(),
-    % print_descargas().
+    cli:cli().
