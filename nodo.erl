@@ -21,8 +21,15 @@ generate_id(InitPid) ->
                 _ -> Id
             end
     after
-        1 -> Id
+        3000 -> Id
     end.
+
+hello(MyId) ->
+    Msg = "HELLO " ++ integer_to_list(MyId) ++ " " ++ integer_to_list(12345) ++ "\n",
+    io:format("Broadcast: ~p~n", [Msg]),
+    broadcast(12332, Msg),
+    timer:sleep(25000),
+    hello(MyId).
 
 get_id(Id) ->
     receive
@@ -53,14 +60,14 @@ init() ->
     getId ! {id, self()},
     
     receive
-      {ok, Id123} ->
-        io:format("Hola soy el nodo ~p~n", [Id123])
+        {ok, Id123} ->
+            io:format("Hola soy el nodo ~p~n", [Id123])
     end,
 
     spawn(fun() -> listen:start() end),
+    spawn(fun() -> hello(MyId) end),
+    
     KnownNodesPid = spawn(fun() -> known_nodes([]) end),
     register(knownNodes, KnownNodesPid),
-
-
 
     cli:cli().
