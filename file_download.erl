@@ -3,10 +3,20 @@
 
 % Funcion llamada por la CLI, le pregunta al nodo con ID
 % 'nodeID' si tiene el archivo con nombre 'FileName'
-ask_for_file(FileName, NodeID) ->
-    % ...
-    receive_answer(Socket, FileName),
+ask_for_file(FileName, {OriginIp, OriginPort}) ->
+    spawn(fun() ->
+        case gen_tcp:connect(OriginIp, OriginPort, [binary, {active, false}], 5000) of
+            {ok, Socket} ->
+                Request = <<"DOWNLOAD_REQUEST ", FileName/binary, "\n">>,
+                gen_tcp:send(Socket, Request),
+                receive_answer(Socket, FileName),
+                gen_tcp:close(Socket);
+            {error, Reason} ->
+                io:format("ERROR en ask_for_file. No se pudo conectar a ~p:~p, ~p~n", [OriginIp, OriginPort, Reason])
+        end
+    end),
     ok.
+
 
 % El nodo recibe una respuesta sobre el archivo que pidió, 
 % y actua según corresponda.
@@ -48,7 +58,7 @@ receive_answer(Socket, FileName) ->
                                     io:format("ERROR en receive_answer al leer ~s: ~p~n", [FileName, Reason]),
                                     ok;        
                                 {ok, ChunkSize:32/big} ->
-                                    receive_and_save_chunks(Socket, FileName, FileSize, ChunkSize),
+                                    save_chunks(Socket, FileName, FileSize, ChunkSize),
                                     ok; 
                     end
     end.
@@ -71,5 +81,42 @@ save_single_file(FileName, Bin) ->
 
 
 %% Recibe los chunks, y los unifica en un solo file
-receive_and_save_chunks(Socket, FileName, FileSize, ChunkSize) ->
-    ok.
+save_chunks(Socket, FileName, FileSize, ChunkSize) ->
+    Dir = "Descargas/",
+    FullPath = filename:join(Dir, FileName),
+
+    % Intenta abrir el archivo para escritura binaria
+    case file:open(FullPath, [write, binary]) of
+        % Si se abrío correctamente, empieza a recibir los chunks
+        {ok, Fd} ->
+            receive_chunks(Socket, Fd, ChunkSize),
+            file:close(Fd),
+            io:format("Archivo ~s descargado correctamente en ~s~n", [FileName, Dir]);
+        {error, Reason} ->
+            io:format("ERROR en file:open al abrir archivo ~s: ~p~n", [FileName, Reason])
+    end.
+
+
+receive_chunks(Socket, Fd, ChunkSize) ->
+    % Intenta recibir 5 bytes: 1 byte de tipo (debe ser 111), 2 bytes que indican el índice, y 2 bytes que indican el tamaño real del chunk
+    case gen_tcp:recv(Socket, 5, 5000) of
+        {ok, <<111, ChunkIndex:16/big, ChunkLen:16/big>>} ->
+            % Recibe los ChunkLen bytes de datos binarios del chunk
+            case gen_tcp:recv(Socket, ChunkLen, 5000) of
+                {ok, ChunkData} ->
+                    ok = file:write(Fd, ChunkData),
+                    % Si el chunk recibido es más chico que ChunkSize, es el último y ya terminó. Si no, sigue recibiendo.
+                    case ChunkLen < ChunkSize of
+                        true ->
+                            ok;
+                        false ->
+                            receive_chunks(Socket, Fd, ChunkSize)
+                    end;
+                {error, Reason} ->
+                    io:format("ERROR en receive_chunks en el chunk ~p: ~p~n", [ChunkIndex, Reason]),
+                    ok
+            end;
+        {error, Reason} ->
+            io:format("ERROR en receive_chunks: ~p~n", [Reason]),
+            ok
+    end.
