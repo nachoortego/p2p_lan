@@ -61,6 +61,7 @@ handle_message(Msg, Socket) ->
 %% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
+    io:format("Buscando archivos que coincidan con ~s~n", [FullPattern]),
     case wildcard(FullPattern) of
         [] ->
             io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
