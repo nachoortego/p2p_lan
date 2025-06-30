@@ -44,47 +44,6 @@ CLI – Comandos Disponibles
 | salir                | Finaliza el nodo.                                                            |
 | help                 | Muestra la lista de comandos disponibles.                                    |
 
-Comunicación Entre Nodos
--------------------------
-
-Mensajes UDP:
-- `HELLO <id_nodo> <puerto_tcp>`
-- `NAME_REQUEST <id_nodo>`
-- `INVALID_NAME <id_nodo>`
-
-Mensajes TCP:
-- `SEARCH_REQUEST <id_origen> <nombre_archivo>`
-- `SEARCH_RESPONSE <id_origen> <archivo> <tamaño>`
-- `DOWNLOAD_REQUEST <archivo>`
-- `CHUNKED FILE (con códigos 101 y 111, y datos binarios)`
-
-Estructura del Proyecto
------------------------
-
-- `nodo.erl`: Módulo principal, inicia todos los procesos.
-- `listen.erl`: Servidor TCP concurrente para aceptar conexiones entrantes.
-- `connect.erl`: Cliente TCP para búsquedas y descargas.
-- `cli.erl`: Proceso interactivo para la línea de comandos.
-- `request.erl`: Manejador de peticiones.
-- `listar_archivos.erl`: Utilidades para gestionar archivos locales.
-- `udp_broadcast.erl`: Maneja la lógica de envío y recepción de mensajes UDP.
-
-Diseño de Concurrencia
-----------------------
-
-Erlang permite un modelo de concurrencia basado en actores (lightweight processes), donde:
-- Cada componente del nodo (CLI, servidor TCP, discovery UDP, etc.) es un proceso independiente.
-- Se usan `spawn`, `receive`, y paso de mensajes para sincronización.
-- No se requieren locks ni condiciones, evitando deadlocks.
-
-Robustez y Manejo de Errores
-----------------------------
-
-- Timeouts: Se implementan `after` para evitar bloqueos indefinidos.
-- Reintentos: Se reintentan IDs en caso de conflicto.
-- Desconexión: Se eliminan nodos inactivos si no se recibe HELLO en 45s.
-- Transferencia Segura: Manejo de chunks para archivos grandes (>4MB).
-
 
 Compilación y Pruebas
 ---------------------
