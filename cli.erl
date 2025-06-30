@@ -32,7 +32,8 @@ cli() ->
             print_compartidos(),
             cli();
         "nodos_conocidos\n" ->
-            case known_nodes:get() of
+            knownNodes ! {get, self()},
+            receive
                 {ok, NodeMap} -> 
                     io:format("Nodos conocidos: ~p~n", [NodeMap]),
                     cli();
