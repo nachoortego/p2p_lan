@@ -39,13 +39,15 @@ wait_response(Socket, Id, StartTime) ->
             receive
                 {udp, Socket, _IP, _Port, Binary} ->
                     Str = binary_to_list(Binary),
+                    io:format("Mensaje UDP crudo: ~p~n", [Str]),
                     Tokens = string:tokens(string:trim(Str), " "),
                         case Tokens of
-                            ["INVALID_NAME", Id, "\n"] ->
+                            ["INVALID_NAME", Id] ->
                                 io:format("Nombre inválido detectado: ~p~n", [Id]),
                                 timer:sleep(5000),
                                 generate_id(); % reinicia con otro ID
-                            _ ->
+                            Token ->
+                                io:format("Mensaje recibido: ~p~n", [Token]),
                                 % ignorar si es un NAME_REQUEST propio u otro mensaje
                                 wait_response(Socket, Id, StartTime)
                         end
