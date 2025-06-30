@@ -42,7 +42,7 @@ wait_response(Socket, Id, StartTime) ->
             Id;
         true ->
             MyIP = get_my_ip(),
-            case gen_udp:recv(Socket, 0) of
+            case gen_udp:recv(Socket, 0, Remaining) of
                 {ok, {IP, _Port, Binary}} ->
                     % Asegúrate de que no estamos procesando un mensaje de nuestra propia IP
                     case IP =:= MyIP of
