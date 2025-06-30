@@ -1,18 +1,25 @@
 -module(nodo).
 -export([init/0]).
 
-broadcast(Socket, Message) ->
-    Address = {255, 255, 255, 255}, 
-    gen_udp:send(Socket, Address, 12346, Message).
+% broadcast(Socket, Message) ->
+%     Address = {255, 255, 255, 255}, 
+%     gen_udp:send(Socket, Address, 12346, Message).
+
+get_my_ip() ->
+    {ok, IFs} = inet:getif(),
+    case lists:filter(fun({{_,_,_,_}, B, C}) -> B =/= 127 end, IFs) of
+        [{{A,B,C,D}, _, _}|_] -> {A,B,C,D};
+        _ -> {127,0,0,1}
+    end.
 
 generate_id(Socket) ->
-    % Id = lists:map(
-    %         fun(_) ->
-    %             lists:nth(rand:uniform(62),
-    %                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-    %         end,
-    %         lists:seq(1, 4)),
-    Id = "pG7T",
+    Id = lists:map(
+            fun(_) ->
+                lists:nth(rand:uniform(62),
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+            end,
+            lists:seq(1, 4)),
+    % Id = "pG7T",
     
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     io:format("Broadcast: ~p~n", [Msg]),
@@ -34,7 +41,9 @@ wait_response(Socket, Id, StartTime) ->
             io:format("Tiempo agotado, usando ID: ~p~n", [Id]),
             Id;
         true ->
+            MyIP = get_my_ip(),
             receive
+                {udp, Socket, MyIP, _, _} -> wait_response(Socket, Id, StartTime);
                 {udp, Socket, _IP, _Port, Binary} ->
                     Str = binary_to_list(Binary),
                     io:format("Mensaje UDP crudo: ~p~n", [Str]),
@@ -58,7 +67,7 @@ hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
     io:format("Broadcast: ~p~n", [Msg]),
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
-    timer:sleep(25000),
+    timer:sleep(3000),
     hello_loop(Socket, MyId).
 
 get_id(Id) ->
