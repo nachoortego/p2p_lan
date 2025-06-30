@@ -8,25 +8,28 @@ start(Socket) ->
     loop(Socket).
 
 loop(Socket) ->
-    receive
-        {udp, Socket, Host, _Port, Data} ->
+    case gen_udp:recv(Socket, 0) of
+        {ok, {Host, _Port, Data}} ->
             Msg = binary_to_list(Data),
             io:format("Mensaje recibido de ~p: ~s~n", [Host, Msg]),
-            handle_message(Msg, Host, Socket)
+            handle_message(Msg, Host, Socket);
+        {error, timeout} ->
+            io:format("Tiempo de espera agotado. Intentando de nuevo...\n"),
+            loop(Socket)
     end.
 
 handle_message(Msg, Host, Socket) ->
     case string:tokens(string:trim(Msg), " \n") of
         ["HELLO", NodeId, TcpPort] ->
             knownNodes ! {new, NodeId, list_to_integer(TcpPort), Host},
-            io:format("HELLO de ~s (~p) TCP:~s~n", [NodeId, Host, TcpPort]),
+            % io:format("HELLO de ~s (~p) TCP:~s~n", [NodeId, Host, TcpPort]),
             loop(Socket);
 
         ["NAME_REQUEST", ReqId] ->
             knownNodes ! {exists, ReqId, self()},
             receive
                 {exists, ReqId} ->
-                    io:format("El id ~s ya está en uso, enviando INVALID_NAME~n", [ReqId]),
+                    % io:format("El id ~s ya está en uso, enviando INVALID_NAME~n", [ReqId]),
                     send_invalid_name(Socket, Host, ReqId);
                 {not_exists, ReqId} ->
                     getId ! {id, self()},
@@ -34,7 +37,7 @@ handle_message(Msg, Host, Socket) ->
                         {ok, Id} ->
                             if
                                 ReqId =:= Id ->
-                                    io:format("El id solicitado (~s) es mi propio id, enviando INVALID_NAME~n", [ReqId]),
+                                    % io:format("El id solicitado (~s) es mi propio id, enviando INVALID_NAME~n", [ReqId]),
                                     send_invalid_name(Socket, Host, ReqId);
                                 true ->
                                     io:format("El id solicitado (~s) no es mi propio id ni esta en la lista de nodos conocidos, no hago nada~n", [ReqId])
@@ -44,7 +47,7 @@ handle_message(Msg, Host, Socket) ->
             loop(Socket);
 
         Token ->
-            io:format("Mensaje no reconocido: ~s~n", [Token]),
+            % io:format("Mensaje no reconocido: ~s~n", [Token]),
             loop(Socket)
     end.
 

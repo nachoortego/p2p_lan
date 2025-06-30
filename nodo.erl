@@ -7,7 +7,7 @@
 
 get_my_ip() ->
     {ok, IFs} = inet:getif(),
-    case lists:filter(fun({{_,_,_,_}, B, C}) -> B =/= 127 end, IFs) of
+    case lists:filter(fun({{_,_,_,_}, B, _C}) -> B =/= 127 end, IFs) of
         [{{A,B,C,D}, _, _}|_] -> {A,B,C,D};
         _ -> {127,0,0,1}
     end.
@@ -42,26 +42,35 @@ wait_response(Socket, Id, StartTime) ->
             Id;
         true ->
             MyIP = get_my_ip(),
-            receive
-                {udp, Socket, MyIP, _, _} -> wait_response(Socket, Id, StartTime);
-                {udp, Socket, _IP, _Port, Binary} ->
-                    Str = binary_to_list(Binary),
-                    io:format("Mensaje UDP crudo: ~p~n", [Str]),
-                    Tokens = string:tokens(string:trim(Str), " "),
-                        case Tokens of
-                            ["INVALID_NAME", Id] ->
-                                io:format("Nombre inválido detectado: ~p~n", [Id]),
-                                timer:sleep(5000),
-                                generate_id(Socket); 
-                            Token ->
-                                io:format("Mensaje recibido: ~p~n", [Token]),
-                                wait_response(Socket, Id, StartTime)
-                        end
-            after Remaining ->
-                io:format("No se recibió INVALID_NAME, usando ID: ~p~n", [Id]),
-                Id
+            case gen_udp:recv(Socket, 0) of
+                {ok, {IP, _Port, Binary}} ->
+                    % Asegúrate de que no estamos procesando un mensaje de nuestra propia IP
+                    case IP =:= MyIP of
+                        true -> 
+                            io:format("Ignorando mensaje de mi propia IP: ~p~n", [IP]),
+                            wait_response(Socket, Id, StartTime); % No hacer nada, vuelve a esperar
+
+                        false -> 
+                            Str = binary_to_list(Binary),
+                            % io:format("Mensaje UDP crudo: ~p~n", [Str]),
+                            Tokens = string:tokens(string:trim(Str), " "),
+                            case Tokens of
+                                ["INVALID_NAME", Id] ->
+                                    io:format("Nombre inválido detectado: ~p~n", [Id]),
+                                    timer:sleep(5000),
+                                    generate_id(Socket); 
+                                Token ->
+                                    io:format("Mensaje recibido: ~p~n", [Token]),
+                                    wait_response(Socket, Id, StartTime)
+                            end
+                    end;
+
+                {error, timeout} -> 
+                    io:format("Tiempo de espera agotado, usando ID: ~p~n", [Id]),
+                    Id
             end
     end.
+
 
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
@@ -106,7 +115,7 @@ known_nodes(NodeMap) ->
     end.
 
 init() ->
-    {ok, Socket} = gen_udp:open(12346, [binary, {broadcast, true}, {reuseaddr, true}, {active, true}]),
+    {ok, Socket} = gen_udp:open(12346, [binary, {broadcast, true}, {reuseaddr, true}, {active, false}]),
     MyId = generate_id(Socket),
     
     GetIdPid = spawn(fun() -> get_id(MyId) end),
