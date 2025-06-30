@@ -57,12 +57,12 @@ cli() ->
                     io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
                     cli()
             end;
-        "pedir_archivo\n" ->
-            FileName = string:trim(io:get_line("Nombre del archivo: ")),
-            NodeId = string:trim(io:get_line("Node ID: ")),
-            Message = io_lib:format("SEARCH_REQUEST ~s ~s~n", [NodeId, FileName]),
-            udp_broadcast:send(list_to_binary(Message)),
-            cli();
+        % "pedir_archivo\n" ->
+        %     FileName = string:trim(io:get_line("Nombre del archivo: ")),
+        %     NodeId = string:trim(io:get_line("Node ID: ")),
+        %     Message = io_lib:format("SEARCH_REQUEST ~s ~s~n", [NodeId, FileName]),
+        %     udp_broadcast:send(list_to_binary(Message)),
+        %     cli();
         "buscar\n" ->
             Patron = string:trim(io:get_line("Patrón de archivo: ")),
             buscar_archivos(Patron),
@@ -83,14 +83,12 @@ cli() ->
     end.
 
 buscar_archivos(Patron) ->
-    %% Archivos locales
     case listar_archivos:listar("Compartida") of
         {ok, Archs} ->
             io:format("Coincidencias locales: ~p~n", [filtrar(Patron, Archs)]);
         _ -> ok
     end,
 
-    %% Consultar nodos conocidos
     getId ! {id, self()},
     receive {ok, MiId} -> ok end,
 
