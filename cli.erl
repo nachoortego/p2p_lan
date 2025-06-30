@@ -82,11 +82,14 @@ buscar_archivos(Patron) ->
     receive
         {ok, NodeMap} ->
             lists:foreach(
-                fun({NodeId, {Ip, Port}}) ->
+                fun({NodeId, InfoMap}) ->
+                    Ip = maps:get(ip, InfoMap),
+                    Port = maps:get(puerto, InfoMap),
                     spawn(fun() -> consulta_tcp(NodeId, Ip, Port, MiId, Patron) end)
                 end,
                 maps:to_list(NodeMap)
             );
+
         _ -> io:format("Error al obtener nodos conocidos~n")
     end.
 

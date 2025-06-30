@@ -22,7 +22,7 @@ generate_id(Socket) ->
     % Id = "pG7T",
     
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
-    io:format("Broadcast: ~p~n", [Msg]),
+    % io:format("Broadcast: ~p~n", [Msg]),
 
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
 
@@ -74,7 +74,7 @@ wait_response(Socket, Id, StartTime) ->
 
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
-    io:format("Broadcast: ~p~n", [Msg]),
+    % io:format("Broadcast: ~p~n", [Msg]),
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
     timer:sleep(3000),
     hello_loop(Socket, MyId).
