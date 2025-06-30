@@ -8,7 +8,6 @@
 start() ->
     case gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]) of
         {ok, ListenSocket} ->
-            io:format("Servidor TCP escuchando en puerto 12544...~n", []),
             accept(ListenSocket);
         {error, Reason} ->
             io:format("Error al iniciar escucha TCP: ~p~n", [Reason])
@@ -24,22 +23,20 @@ accept(ListenSocket) ->
             io:format("Error en accept: ~p~n", [Reason])
     end.
 
-%% Maneja una conexión TCP entrante
 handle_connection(Socket) ->
-    case inet:peername(Socket) of
-        {ok, {IP, Port}} ->
-            io:format("Conexión recibida de ~p:~p~n", [IP, Port]);
-        _ ->
-            ok
-    end,
+    % case inet:peername(Socket) of
+    %     {ok, {IP, Port}} ->
+    %         ok
+    %     _ ->
+    %         ok
+    % end,
     loop(Socket).
 
-%% Loop principal de manejo de mensajes por conexión
 loop(Socket) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
             Msg = binary_to_list(Data),
-            io:format("Mensaje recibido: ~s~n", [Msg]),
+            % io:format("Mensaje recibido: ~s~n", [Msg]),
             handle_message(Msg, Socket),
             loop(Socket);
         {error, closed} ->
@@ -52,10 +49,10 @@ loop(Socket) ->
 handle_message(Msg, Socket) ->
     case string:tokens(string:trim(Msg), " \n\r") of
         ["SEARCH_REQUEST", NodeId, Pattern] ->
-            io:format("Recibido SEARCH_REQUEST de ~s con patrón ~s~n", [NodeId, Pattern]),
+            % io:format("Recibido SEARCH_REQUEST de ~s con patrón ~s~n", [NodeId, Pattern]),
             send_search_responses(Socket, NodeId, Pattern);
         ["DOWNLOAD_REQUEST", Filename] ->
-            io:format("Download request para archivo ~s~n", [Filename]),
+            % io:format("Download request para archivo ~s~n", [Filename]),
             send_file:send_file(Socket, Filename);
         _ ->
             io:format("Mensaje no reconocido: ~s~n", [Msg])
@@ -64,10 +61,11 @@ handle_message(Msg, Socket) ->
 %% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
-    io:format("Buscando archivos que coincidan con ~s~n", [FullPattern]),
+    % io:format("Buscando archivos que coincidan con ~s~n", [FullPattern]),
     case wildcard(FullPattern) of
         [] ->
-            io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
+            ok;
+            % io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
         Matches ->
             lists:foreach(
                 fun(Filename) ->

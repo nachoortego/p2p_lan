@@ -4,7 +4,6 @@
 -define(PORT, 12346).
 
 start(Socket) ->
-    io:format("Escuchando UDP en todas las IPs, puerto ~p...~n", [12346]),
     loop(Socket).
 
 loop(Socket) ->
@@ -26,7 +25,6 @@ handle_message(Msg, Host, Socket) ->
     case string:tokens(string:trim(Msg), " \n") of
         ["HELLO", NodeId, TcpPort] ->
             knownNodes ! {new, NodeId, list_to_integer(TcpPort), Host},
-            io:format("HELLO de ~s (~p) TCP:~s~n", [NodeId, Host, TcpPort]),
             loop(Socket);
 
         ["NAME_REQUEST", ReqId] ->
@@ -48,7 +46,7 @@ handle_message(Msg, Host, Socket) ->
             end,
             loop(Socket);
 
-        Token ->
+        _ ->
             loop(Socket)
     end.
 
