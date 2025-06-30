@@ -41,7 +41,7 @@ wait_response(Socket, Id, StartTime) ->
                     Str = binary_to_list(Binary),
                     Tokens = string:tokens(string:trim(Str), " "),
                         case Tokens of
-                            ["INVALID_NAME", Id] ->
+                            ["INVALID_NAME", Id, "\n"] ->
                                 io:format("Nombre inválido detectado: ~p~n", [Id]),
                                 timer:sleep(5000),
                                 generate_id(); % reinicia con otro ID
@@ -56,9 +56,9 @@ wait_response(Socket, Id, StartTime) ->
     end.
 
 hello_loop(MyId) ->
-    Msg = "HELLO " ++ MyId ++ " 12543\n",
+    Msg = "HELLO " ++ MyId ++ " 12544\n",
     io:format("Broadcast: ~p~n", [Msg]),
-    broadcast(12346, Msg),
+    broadcast(0, Msg),
     timer:sleep(25000),
     hello_loop(MyId).
 

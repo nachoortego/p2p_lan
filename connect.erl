@@ -3,7 +3,7 @@
 -import(filelib, [wildcard/2]).
 
 start() ->
-    {ok, ListenSocket} = gen_tcp:listen(12543, [{reuseaddr, true}]),
+    {ok, ListenSocket} = gen_tcp:listen(12544, [{reuseaddr, true}]),
     wait_connect(ListenSocket, 0).
 
 wait_connect(ListenSocket, N) ->

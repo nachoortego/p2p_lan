@@ -43,13 +43,14 @@ handle_message(Msg, Host, Socket) ->
             end,
             loop(Socket);
 
-        _ ->
+        Token ->
+            io:format("Mensaje no reconocido: ~s~n", [Token]),
             loop(Socket)
     end.
 
-send_hello(Socket, NodeId, TcpPort) ->
-    Msg = io_lib:format("HELLO ~s ~p\n", [NodeId, TcpPort]),
-    gen_udp:send(Socket, {255,255,255,255}, ?PORT, list_to_binary(Msg)).
+% send_hello(Socket, NodeId, TcpPort) ->
+%     Msg = io_lib:format("HELLO ~s ~p\n", [NodeId, TcpPort]),
+%     gen_udp:send(Socket, {255,255,255,255}, ?PORT, list_to_binary(Msg)).
 
 % send_name_request(Socket, NodeId) ->
 %     Msg = io_lib:format("NAME_REQUEST ~s\n", [NodeId]),
