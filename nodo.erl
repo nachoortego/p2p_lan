@@ -6,13 +6,13 @@ broadcast(Socket, Message) ->
     gen_udp:send(Socket, Address, 12346, Message).
 
 generate_id(Socket) ->
-    Id = lists:map(
-            fun(_) ->
-                lists:nth(rand:uniform(62),
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-            end,
-            lists:seq(1, 4)),
-    % Id = "Hola",
+    % Id = lists:map(
+    %         fun(_) ->
+    %             lists:nth(rand:uniform(62),
+    %                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    %         end,
+    %         lists:seq(1, 4)),
+    Id = "pG7T",
     
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     io:format("Broadcast: ~p~n", [Msg]),
@@ -22,7 +22,6 @@ generate_id(Socket) ->
     StartTime = erlang:monotonic_time(millisecond),
     Result = wait_response(Socket, Id, StartTime),
 
-    gen_udp:close(Socket),
     Result.
 
 wait_response(Socket, Id, StartTime) ->
@@ -38,7 +37,7 @@ wait_response(Socket, Id, StartTime) ->
             receive
                 {udp, Socket, _IP, _Port, Binary} ->
                     Str = binary_to_list(Binary),
-                    % io:format("Mensaje UDP crudo: ~p~n", [Str]),
+                    io:format("Mensaje UDP crudo: ~p~n", [Str]),
                     Tokens = string:tokens(string:trim(Str), " "),
                         case Tokens of
                             ["INVALID_NAME", Id] ->
@@ -116,5 +115,7 @@ init() ->
     
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
     register(knownNodes, KnownNodesPid),
+
+    % gen_udp:close(Socket),
 
     cli:cli().
