@@ -18,7 +18,7 @@ generate_id() ->
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     io:format("Broadcast: ~p~n", [Msg]),
 
-    {ok, Socket} = gen_udp:open(0, [binary, {active, true}, {broadcast, true}]),
+    {ok, Socket} = gen_udp:open(12346, [binary, {active, true}, {broadcast, true}, {reuseaddr, true}]),
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
 
     StartTime = erlang:monotonic_time(millisecond),
