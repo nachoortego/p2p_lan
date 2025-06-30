@@ -28,6 +28,12 @@ cli() ->
         "listar_descargas\n" ->
             print_descargas(),
             cli();
+        "descargar\n" ->
+            FileName = string:trim(io:get_line("Nombre del archivo a descargar: ")),
+            NodeId = string:trim(io:get_line("Node ID del nodo origen: ")),
+            Nodo = nodo:get_node_info(NodeId),
+            file_download:ask_for_file(FileName, {Nodo#nodo.ip, Nodo#nodo.puerto}),
+            cli();
         "listar_compartidos\n" ->
             print_compartidos(),
             cli();
