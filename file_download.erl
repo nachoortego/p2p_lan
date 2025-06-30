@@ -20,7 +20,7 @@ ask_for_file(FileName, {OriginIp, OriginPort}) ->
 
 % El nodo recibe una respuesta sobre el archivo que pidió, y actua según corresponda.
 receive_answer(Socket, FileName) ->
-    case gen_tcp:recv(Socket, 1, 5000) of
+    case gen_tcp:recv(Socket, 1, 20000) of
         % ERROR, pasaron 5seg y no se encontró nada
         {error, Reason} ->
             io:format("ERROR en receive_answer: ~p~n", [Reason]),
@@ -100,10 +100,10 @@ save_chunks(Socket, FileName, FileSize, ChunkSize) ->
     end.
 
 receive_chunks(Socket, Fd, ChunkSize, FileSize, BytesReceived) ->
-    % Intenta recibir 5 bytes: 1 byte que indica el tipo de mensaje (debe ser 111, 
+    % Intenta recibir 7 bytes: 1 byte que indica el tipo de mensaje (debe ser 111, 
     % tipo chunk), 2 bytes que indican el índice, y 4 bytes que indican el tamaño 
     % real del chunk.
-    case gen_tcp:recv(Socket, 5, 5000) of
+    case gen_tcp:recv(Socket, 7, 5000) of
         {ok, <<111, ChunkIndex:16/big, ChunkRealSize:32/big>>} ->
             % Recibe los ChunkRealSize bytes de datos binarios del chunk
             case gen_tcp:recv(Socket, ChunkRealSize, 5000) of
