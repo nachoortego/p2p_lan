@@ -34,7 +34,9 @@ send_chunks(_, _, _, _, _) ->
     ok.
 
 % Funcion para el envio del archivo
-send_file(Socket, FilePath) ->
+send_file(Socket, FileName) ->
+    Dir = "Descargas/",
+    FilePath = filename:join(Dir, FileName),
     io:format("Enviando archivo: ~s~n", [FilePath]),
     case get_file_size(FilePath) of
         {ok, Size} when Size =< 4 * 1024 * 1024 ->
