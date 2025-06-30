@@ -54,12 +54,12 @@ wait_response(Socket, Id, StartTime) ->
             end
     end.
 
-hello(MyId) ->
+hello_loop(MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12543\n",
     io:format("Broadcast: ~p~n", [Msg]),
     broadcast(12346, Msg),
     timer:sleep(25000),
-    hello(MyId).
+    hello_loop(MyId).
 
 get_id(Id) ->
     receive
@@ -110,7 +110,7 @@ init() ->
     end,
 
     spawn(fun() -> listen:start() end),
-    spawn(fun() -> hello(MyId) end),
+    spawn(fun() -> hello_loop(MyId) end),
     
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
     register(knownNodes, KnownNodesPid),
