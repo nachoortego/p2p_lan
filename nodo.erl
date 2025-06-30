@@ -148,7 +148,8 @@ init() ->
             io:format("Hola soy el nodo ~p~n", [Id123])
     end,
 
-    spawn(fun() -> listen:start(Socket) end),
+    spawn(fun() -> listen:start(Socket) end), % UDP
+    spawn(fun() -> connect:start() end), %TCP
     spawn(fun() -> hello_loop(Socket, MyId) end),
     
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),

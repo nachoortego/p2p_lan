@@ -6,15 +6,23 @@
 
 %% Inicia el servidor TCP
 start() ->
-    {ok, ListenSocket} = gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]),
-    io:format("Servidor TCP escuchando en puerto 12544...~n", []),
-    accept(ListenSocket).
+    case gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]) of
+        {ok, ListenSocket} ->
+            io:format("Servidor TCP escuchando en puerto 12544...~n", []),
+            accept(ListenSocket);
+        {error, Reason} ->
+            io:format("Error al iniciar escucha TCP: ~p~n", [Reason])
+    end.
 
 %% Acepta conexiones entrantes concurrentemente
 accept(ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    spawn(fun() -> accept(ListenSocket) end),  % aceptamos la próxima
-    spawn(fun() -> handle_connection(Socket) end). % manejamos esta
+    case gen_tcp:accept(ListenSocket) of
+        {ok, Socket} ->
+            spawn(fun() -> handle_connection(Socket) end),
+            accept(ListenSocket);
+        {error, Reason} ->
+            io:format("Error en accept: ~p~n", [Reason])
+    end.
 
 %% Maneja una conexión TCP entrante
 handle_connection(Socket) ->
