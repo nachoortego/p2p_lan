@@ -7,7 +7,8 @@ ask_for_file(FileName, {OriginIp, OriginPort}) ->
     spawn(fun() ->
         case gen_tcp:connect(OriginIp, OriginPort, [binary, {active, false}], 5000) of
             {ok, Socket} ->
-                Request = <<"DOWNLOAD_REQUEST ", FileName/binary, "\n">>,
+                FileNameBin = list_to_binary(FileName),
+                Request = <<"DOWNLOAD_REQUEST ", FileNameBin/binary, "\n">>,
                 gen_tcp:send(Socket, Request),
                 receive_answer(Socket, FileName),
                 gen_tcp:close(Socket);
