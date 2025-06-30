@@ -54,6 +54,8 @@ handle_message(Msg, Socket) ->
         ["SEARCH_REQUEST", NodeId, Pattern] ->
             io:format("Recibido SEARCH_REQUEST de ~s con patrón ~s~n", [NodeId, Pattern]),
             send_search_responses(Socket, NodeId, Pattern);
+        ["DOWNLOAD_REQUEST", Filename] ->
+            io:format("Download request para archivo ~s~n", [Filename]);
         _ ->
             io:format("Mensaje no reconocido: ~s~n", [Msg])
     end.
