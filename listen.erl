@@ -29,8 +29,17 @@ handle_message(Msg, Host, Socket) ->
                     io:format("El id ~s ya está en uso, enviando INVALID_NAME~n", [ReqId]),
                     send_invalid_name(Socket, Host, ReqId);
                 {not_exists, ReqId} ->
-                    io:format("El id ~s no está en uso, enviando HELLO~n", [ReqId]),
-                    send_hello(Socket, ReqId, ?PORT)
+                    getId ! {id, self()},
+                    receive
+                        {ok, Id} ->
+                            if
+                                ReqId =:= Id ->
+                                    io:format("El id solicitado (~s) es mi propio id, enviando INVALID_NAME~n", [ReqId]),
+                                    send_invalid_name(Socket, Host, ReqId);
+                                true ->
+                                    io:format("El id solicitado (~s) no es mi propio id ni esta en la lista de nodos conocidos, no hago nada~n", [ReqId])
+                            end
+                    end
             end,
             loop(Socket);
 
