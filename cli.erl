@@ -119,8 +119,8 @@ consulta_tcp(RemoteNodeId, Ip, Port, MiId, Patron) ->
         {ok, Socket} ->
             Msg = io_lib:format("SEARCH_REQUEST ~s ~s~n", [MiId, Patron]),
             gen_tcp:send(Socket, lists:flatten(Msg)),
-            recibir_respuestas(Socket, RemoteNodeId),
-            gen_tcp:close(Socket);
+            recibir_respuestas(Socket, RemoteNodeId);
+            % gen_tcp:close(Socket);
         {error, Reason} ->
             io:format("No se pudo conectar con ~s (~p): ~p~n", [RemoteNodeId, Ip, Reason])
     end.
