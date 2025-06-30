@@ -3,10 +3,14 @@
 
 get_my_ip() ->
     {ok, IFs} = inet:getif(),
-    case lists:filter(fun({{_,_,_,_}, B, _C}) -> B =/= 127 end, IFs) of
+    ValidIP = fun({{A,B,_C,_D}, _, _}) ->
+                  not (A =:= 127 orelse (A =:= 169 andalso B =:= 254))
+              end,
+    case lists:filter(ValidIP, IFs) of
         [{{A,B,C,D}, _, _}|_] -> {A,B,C,D};
         _ -> {127,0,0,1}
     end.
+
 
 generate_id(Socket) ->
     Id = lists:map(
@@ -31,7 +35,7 @@ wait_response(Socket, Id, StartTime) ->
     Remaining = Timeout - Elapsed,
     if
         Remaining =< 0 ->
-            io:format("Tiempo agotado, usando ID: ~p~n", [Id]),
+            % io:format("Tiempo agotado, usando ID: ~p~n", [Id]),
             Id;
         true ->
             MyIP = get_my_ip(),
