@@ -27,7 +27,7 @@ send_file_in_chunks(Socket, FilePath, Size) ->
 send_chunks(Socket, FD, Index, Remaining, ChunkSize) when Remaining > 0 ->
     ThisChunkSize = min(ChunkSize, Remaining),
     {ok, Bin} = file:pread(FD, Index * ChunkSize, ThisChunkSize),
-    gen_tcp:send(Socket, <<111, Index:16/big, ThisChunkSize:16/big>>),
+    gen_tcp:send(Socket, <<111, Index:16/big, ThisChunkSize:32/big>>),
     gen_tcp:send(Socket, Bin),
     send_chunks(Socket, FD, Index + 1, Remaining - ThisChunkSize, ChunkSize);
 send_chunks(_, _, _, _, _) ->

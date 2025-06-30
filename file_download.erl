@@ -125,5 +125,8 @@ receive_chunks(Socket, Fd, ChunkSize, FileSize, BytesReceived) ->
             end;
         {error, Reason} ->
             io:format("ERROR en receive_chunks: ~p~n", [Reason]),
+            ok;
+        {ok, Msg} ->
+            io:format("ERROR en receive_chunks: mensaje inesperado recibido ~p~n", [Msg]),
             ok
     end.
