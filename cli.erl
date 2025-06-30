@@ -90,7 +90,9 @@ buscar_archivos(Patron) ->
     end,
 
     getId ! {id, self()},
-    receive {ok, MiId} -> ok end,
+    receive 
+        {ok, MiId} -> ok 
+    end,
 
     knownNodes ! {get, self()},
     receive
@@ -108,7 +110,6 @@ buscar_archivos(Patron) ->
     end.
 
 filtrar(Patron, Archs) ->
-    %% Solo devuelve los archivos que matchean el patrón (wildcard)
     Pattern = filename:join(".", Patron),
     [A || A <- Archs, filelib:wildcard_match(Pattern, A)].
 

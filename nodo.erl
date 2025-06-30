@@ -47,7 +47,7 @@ wait_response(Socket, Id, StartTime) ->
                     % Asegúrate de que no estamos procesando un mensaje de nuestra propia IP
                     case IP =:= MyIP of
                         true -> 
-                            io:format("Ignorando mensaje de mi propia IP: ~p~n", [IP]),
+                            % io:format("Ignorando mensaje de mi propia IP: ~p~n", [IP]),
                             wait_response(Socket, Id, StartTime); % No hacer nada, vuelve a esperar
 
                         false -> 
@@ -56,7 +56,7 @@ wait_response(Socket, Id, StartTime) ->
                             Tokens = string:tokens(string:trim(Str), " "),
                             case Tokens of
                                 ["INVALID_NAME", Id] ->
-                                    io:format("Nombre inválido detectado: ~p~n", [Id]),
+                                    % io:format("Nombre inválido detectado: ~p~n", [Id]),
                                     timer:sleep(5000),
                                     generate_id(Socket); 
                                 Token ->
