@@ -18,12 +18,12 @@ Requisitos:
 
 Compilación:
 ```bash
-    make
+make
 ```
 
 Ejecución:
 ```bash
-    make run
+make run
 ```
 Esto lanza el nodo en modo sin consola (`-noshell`) ejecutando `nodo:init/0`.
 
@@ -50,7 +50,7 @@ Compilación y Pruebas
 
 Puede probarse en al menos dos terminales diferentes con:
 ```bash
-    make run
+make run
 ```
 
 Y en cada CLI asignar un ID distinto para los nodos, luego verificar nodos conocidos, búsqueda y descarga.
