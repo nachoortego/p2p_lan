@@ -8,17 +8,24 @@ broadcast(Port, Message) ->
   gen_udp:close(Socket).
 
 generate_id(InitPid) ->
-    Id = rand:uniform(100000),
+    Id = lists:map(
+            fun(_) ->
+                lists:nth(rand:uniform(62),
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+            end,
+            lists:seq(1,4)),
     Msg = "NAME_REQUEST " ++ integer_to_list(Id) ++ "\n",
-    broadcast(12345, Msg),
+    broadcast(12346, Msg),
     receive
         {udp, _Socket, _IP, _InPort, Binary} ->
-            [Status, _] = string:tokens(Binary, " "),
-            case Status of
-                "INVALID_NAME" ->
+            Str = binary_to_list(Binary),
+            Myname = integer_to_list(Id),
+            case string:tokens(string:trim(Str), " ") of
+                ["INVALID_NAME", Myname]->
                     timer:sleep(5000),
                     generate_id(InitPid);
-                _ -> Id
+                _ ->
+                    Id
             end
     after
         3000 -> Id
@@ -37,17 +44,33 @@ get_id(Id) ->
     end,
     get_id(Id).
 
-
-known_nodes(NodeList) ->
+% {
+%     "idNodo": {
+%         "ip": "123.123.123",
+%         "puerto": "12345"
+%     },
+% }
+known_nodes(NodeMap) ->
     receive
-        {new, NodeId} ->
-            case lists:member(NodeId, NodeList) of
-                true -> known_nodes(NodeList);
-                false -> known_nodes([NodeId | NodeList])
+        {new, NodeId, Port, NodeIP} ->
+            case maps:is_key(NodeId, NodeMap) of
+                true -> known_nodes(NodeMap);
+                false ->
+                    NodeInfo = #{
+                        ip => NodeIP,
+                        puerto => Port
+                    },
+                    known_nodes(maps:put(NodeId, NodeInfo, NodeMap))
             end;
-        {get, NodeId} ->
-            NodeId ! {ok, NodeList},
-            known_nodes(NodeList)
+        {get, From} ->
+            From ! {ok, NodeMap},
+            known_nodes(NodeMap);
+        {exists, NodeId, From} ->
+            case maps:is_key(NodeId, NodeMap) of
+                true -> From ! {exists, NodeId};
+                false -> From ! {not_exists, NodeId}
+            end,
+            known_nodes(NodeMap)
     end.
 
 init() ->
@@ -67,7 +90,7 @@ init() ->
     spawn(fun() -> listen:start() end),
     spawn(fun() -> hello(MyId) end),
     
-    KnownNodesPid = spawn(fun() -> known_nodes([]) end),
+    KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
     register(knownNodes, KnownNodesPid),
 
     cli:cli().

@@ -28,8 +28,23 @@ cli() ->
         "listar_descargas\n" ->
             print_descargas(),
             cli();
-        "listar_compartidosos\n" ->
+        "listar_compartidos\n" ->
             print_compartidos(),
+            cli();
+        "nodos_conocidos\n" ->
+            case known_nodes:get() of
+                {ok, NodeMap} -> 
+                    io:format("Nodos conocidos: ~p~n", [NodeMap]),
+                    cli();
+                {error, Reason} -> 
+                    io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
+                    cli()
+            end;
+        "pedir_archivo\n" ->
+            FileName = string:trim(io:get_line("Nombre del archivo: ")),
+            NodeId = string:trim(io:get_line("Node ID: ")),
+            Message = io_lib:format("SEARCH_REQUEST ~s ~s~n", [NodeId, FileName]),
+            udp_broadcast:send(list_to_binary(Message)),
             cli();
         "salir\n" ->
             io:format("Saliendo...~n"),
@@ -38,7 +53,7 @@ cli() ->
             io:format("Comandos disponibles:~n"),
             io:format("  id_nodo - Muestra el ID del nodo~n"),
             io:format("  listar_descargas - Lista los archivos descargados~n"),
-            io:format("  listar_compartidosos - Lista los archivos compartidos~n"),
+            io:format("  listar_compartidos - Lista los archivos compartidos~n"),
             io:format("  salir - Salir del programa~n"),
             cli();
         _ ->

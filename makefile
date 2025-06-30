@@ -1,7 +1,7 @@
 # all: nodo
 # 	erl -s nodo init 1
 
-nodo: listar_archivos listen connect cli
+nodo: listar_archivos listen connect cli run request
 	erlc nodo.erl
 
 listar_archivos: listar_archivos.erl
@@ -15,6 +15,12 @@ connect: connect.erl
 
 cli: cli.erl
 	erlc cli.erl
+
+request: request.erl
+	erlc request.erl
+
+run: nodo
+	erl -noshell -s nodo init -s init stop
 
 clean:
 	rm -f *.beam
