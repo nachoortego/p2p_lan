@@ -8,13 +8,20 @@ start(Socket) ->
     loop(Socket).
 
 loop(Socket) ->
+    MyIP = nodo:get_my_ip(),
     case gen_udp:recv(Socket, 0) of
         {ok, {Host, _Port, Data}} ->
-            Msg = binary_to_list(Data),
-            io:format("Mensaje recibido de ~p: ~s~n", [Host, Msg]),
-            handle_message(Msg, Host, Socket);
+            case Host =:= MyIP of
+                true ->
+                    % io:format("Ignorando mensaje de mi propia IP: ~p~n", [Host]),
+                    loop(Socket);
+                false ->
+                    Msg = binary_to_list(Data),
+                    % io:format("Mensaje recibido de ~p: ~s~n", [Host, Msg]),
+                    handle_message(Msg, Host, Socket)
+            end;
         {error, timeout} ->
-            io:format("Tiempo de espera agotado. Intentando de nuevo...\n"),
+            % io:format("Tiempo de espera agotado. Intentando de nuevo...\n"),
             loop(Socket)
     end.
 
@@ -60,7 +67,7 @@ handle_message(Msg, Host, Socket) ->
 %     gen_udp:send(Socket, {255,255,255,255}, ?PORT, list_to_binary(Msg)).
 
 send_invalid_name(_ListenSocket, Host, NodeId) ->
-    io:format("Respondemos a IP: ~p~n", [Host]),
+    % io:format("Respondemos a IP: ~p~n", [Host]),
     Msg = io_lib:format("INVALID_NAME ~s\n", [NodeId]),
     {ok, SendSocket} = gen_udp:open(0, [binary, {broadcast, true}]),
     gen_udp:send(SendSocket, Host, 12346, list_to_binary(Msg)),

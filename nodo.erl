@@ -1,5 +1,5 @@
 -module(nodo).
--export([init/0]).
+-export([init/0, get_my_ip/0]).
 
 % broadcast(Socket, Message) ->
 %     Address = {255, 255, 255, 255}, 
@@ -91,18 +91,38 @@ get_id(Id) ->
 %         "puerto": "12345"
 %     },
 % }
+
+check_nodes() ->
+    timer:sleep(10000),
+    knownNodes ! {checkNodes},
+    check_nodes().
+
 known_nodes(NodeMap) ->
     receive
         {new, NodeId, Port, NodeIP} ->
             case maps:is_key(NodeId, NodeMap) of
-                true -> known_nodes(NodeMap);
+                true ->
+                    NodeInfo = maps:get(NodeId, NodeMap),
+                    UpdatedNodeInfo = maps:put(last_update, erlang:monotonic_time(millisecond), NodeInfo),
+                    known_nodes(maps:put(NodeId, UpdatedNodeInfo, NodeMap));
                 false ->
                     NodeInfo = #{
                         ip => NodeIP,
-                        puerto => Port
+                        puerto => Port,
+                        last_update => erlang:monotonic_time(millisecond)
                     },
                     known_nodes(maps:put(NodeId, NodeInfo, NodeMap))
             end;
+        {checkNodes} ->
+            Now = erlang:monotonic_time(millisecond),
+            TenSeconds = 10000,
+            FilteredMap = maps:filter(
+                fun(_Key, NodeInfo) ->
+                    Now - maps:get(last_update, NodeInfo) =< TenSeconds
+                end,
+                NodeMap
+            ),
+            known_nodes(FilteredMap);
         {get, From} ->
             From ! {ok, NodeMap},
             known_nodes(NodeMap);
@@ -133,6 +153,7 @@ init() ->
     
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
     register(knownNodes, KnownNodesPid),
+    spawn(fun () -> check_nodes() end),
 
     % gen_udp:close(Socket),
 
