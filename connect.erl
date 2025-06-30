@@ -1,55 +1,74 @@
 -module(connect).
 -export([start/0]).
+
 -import(filelib, [wildcard/2]).
+-include_lib("kernel/include/file.hrl"). % para acceder a #file_info
 
+%% Inicia el servidor TCP
 start() ->
-    {ok, ListenSocket} = gen_tcp:listen(12544, [{reuseaddr, true}]),
-    wait_connect(ListenSocket, 0).
+    {ok, ListenSocket} = gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]),
+    io:format("Servidor TCP escuchando en puerto 12544...~n", []),
+    accept(ListenSocket).
 
-wait_connect(ListenSocket, N) ->
-    io:fwrite("Escuchando...~n", []),
+%% Acepta conexiones entrantes concurrentemente
+accept(ListenSocket) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
-    spawn (fun () -> wait_connect (ListenSocket, N+1) end),
-    handle_connection(Socket).
+    spawn(fun() -> accept(ListenSocket) end),  % aceptamos la próxima
+    spawn(fun() -> handle_connection(Socket) end). % manejamos esta
 
+%% Maneja una conexión TCP entrante
 handle_connection(Socket) ->
-    io:fwrite("Nueva conexión de ~p~n", [Socket]),
+    case inet:peername(Socket) of
+        {ok, {IP, Port}} ->
+            io:format("Conexión recibida de ~p:~p~n", [IP, Port]);
+        _ ->
+            ok
+    end,
     loop(Socket).
 
+%% Loop principal de manejo de mensajes por conexión
 loop(Socket) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
-            io:fwrite("Mensaje recibido: ~s~n", [Data]),
-            handle_message(Data, inet:peername(Socket), Socket),
+            Msg = binary_to_list(Data),
+            io:format("Mensaje recibido: ~s~n", [Msg]),
+            handle_message(Msg, Socket),
             loop(Socket);
         {error, closed} ->
-            io:fwrite("Conexión cerrada~n", []);
+            io:format("Conexión cerrada por el cliente~n", []);
         {error, Reason} ->
-            io:fwrite("Error en la conexión: ~p~n", [Reason])
+            io:format("Error en conexión: ~p~n", [Reason])
     end.
 
-handle_message(Msg, _Host, Socket) ->
-    case string:tokens(string:trim(Msg), " \n") of
+%% Analiza y responde a mensajes
+handle_message(Msg, Socket) ->
+    case string:tokens(string:trim(Msg), " \n\r") of
         ["SEARCH_REQUEST", NodeId, Pattern] ->
-            io:format("SEARCH_REQUEST de ~s: ~s~n", [NodeId, Pattern]),
-            send_search_responses(Socket, NodeId, Pattern),
-            loop(Socket);
-
+            io:format("Recibido SEARCH_REQUEST de ~s con patrón ~s~n", [NodeId, Pattern]),
+            send_search_responses(Socket, NodeId, Pattern);
         _ ->
-            loop(Socket)
+            io:format("Mensaje no reconocido: ~s~n", [Msg])
     end.
 
--include_lib("kernel/include/file.hrl").
-
+%% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
-    Matches = wildcard(Pattern, [filename:join("./Compartida", "*")]),
-    lists:foreach(
-        fun(Filename) ->
-            {ok, FileInfo} = file:read_file_info(Filename),
-            Size = FileInfo#file_info.size,
-            BaseName = filename:basename(Filename),
-            Response = io_lib:format("SEARCH_RESPONSE ~s ~s ~p~n", [NodeId, BaseName, Size]),
-            gen_tcp:send(Socket, lists:flatten(Response))
-        end,
-        Matches
-    ).
+    FullPattern = filename:join("./Compartida", Pattern),
+    case wildcard(FullPattern, []) of
+        [] ->
+            io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
+        Matches ->
+            lists:foreach(
+                fun(Filename) ->
+                    case file:read_file_info(Filename) of
+                        {ok, FileInfo} ->
+                            Size = FileInfo#file_info.size,
+                            BaseName = filename:basename(Filename),
+                            Response = io_lib:format("SEARCH_RESPONSE ~s ~s ~p~n", [NodeId, BaseName, Size]),
+                            gen_tcp:send(Socket, lists:flatten(Response));
+                        {error, Reason} ->
+                            io:format("Error leyendo info de ~s: ~p~n", [Filename, Reason])
+                    end
+                end,
+                Matches
+            )
+    end.
