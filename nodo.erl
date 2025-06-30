@@ -1,10 +1,6 @@
 -module(nodo).
 -export([init/0, get_my_ip/0]).
 
-% broadcast(Socket, Message) ->
-%     Address = {255, 255, 255, 255}, 
-%     gen_udp:send(Socket, Address, 12346, Message).
-
 get_my_ip() ->
     {ok, IFs} = inet:getif(),
     case lists:filter(fun({{_,_,_,_}, B, _C}) -> B =/= 127 end, IFs) of
@@ -19,11 +15,8 @@ generate_id(Socket) ->
                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
             end,
             lists:seq(1, 4)),
-    % Id = "pG7T",
     
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
-    % io:format("Broadcast: ~p~n", [Msg]),
-
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
 
     StartTime = erlang:monotonic_time(millisecond),
@@ -44,19 +37,14 @@ wait_response(Socket, Id, StartTime) ->
             MyIP = get_my_ip(),
             case gen_udp:recv(Socket, 0, Remaining) of
                 {ok, {IP, _Port, Binary}} ->
-                    % Asegúrate de que no estamos procesando un mensaje de nuestra propia IP
                     case IP =:= MyIP of
                         true -> 
-                            % io:format("Ignorando mensaje de mi propia IP: ~p~n", [IP]),
-                            wait_response(Socket, Id, StartTime); % No hacer nada, vuelve a esperar
-
+                            wait_response(Socket, Id, StartTime); % No hace nada, vuelve a esperar
                         false -> 
                             Str = binary_to_list(Binary),
-                            % io:format("Mensaje UDP crudo: ~p~n", [Str]),
                             Tokens = string:tokens(string:trim(Str), " "),
                             case Tokens of
                                 ["INVALID_NAME", Id] ->
-                                    % io:format("Nombre inválido detectado: ~p~n", [Id]),
                                     timer:sleep(5000),
                                     generate_id(Socket); 
                                 Token ->
@@ -74,7 +62,6 @@ wait_response(Socket, Id, StartTime) ->
 
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
-    % io:format("Broadcast: ~p~n", [Msg]),
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
     timer:sleep(3000),
     hello_loop(Socket, MyId).
@@ -85,13 +72,6 @@ get_id(Id) ->
     end,
     get_id(Id).
 
-% {
-%     "idNodo": {
-%         "ip": "123.123.123",
-%         "puerto": "12345"
-%     },
-% }
-
 check_nodes() ->
     timer:sleep(10000),
     knownNodes ! {checkNodes},
@@ -100,18 +80,23 @@ check_nodes() ->
 known_nodes(NodeMap) ->
     receive
         {new, NodeId, Port, NodeIP} ->
-            case maps:is_key(NodeId, NodeMap) of
-                true ->
-                    NodeInfo = maps:get(NodeId, NodeMap),
-                    UpdatedNodeInfo = maps:put(last_update, erlang:monotonic_time(millisecond), NodeInfo),
-                    known_nodes(maps:put(NodeId, UpdatedNodeInfo, NodeMap));
-                false ->
-                    NodeInfo = #{
-                        ip => NodeIP,
-                        puerto => Port,
-                        last_update => erlang:monotonic_time(millisecond)
-                    },
-                    known_nodes(maps:put(NodeId, NodeInfo, NodeMap))
+            getId ! {id, self()},
+            receive
+                {ok, NodeId} -> ok;
+                {ok, _} ->
+                    case maps:is_key(NodeId, NodeMap) of
+                        true ->
+                            NodeInfo = maps:get(NodeId, NodeMap),
+                            UpdatedNodeInfo = maps:put(last_update, erlang:monotonic_time(millisecond), NodeInfo),
+                            known_nodes(maps:put(NodeId, UpdatedNodeInfo, NodeMap));
+                        false ->
+                            NodeInfo = #{
+                                ip => NodeIP,
+                                puerto => Port,
+                                last_update => erlang:monotonic_time(millisecond)
+                            },
+                            known_nodes(maps:put(NodeId, NodeInfo, NodeMap))
+                    end
             end;
         {checkNodes} ->
             Now = erlang:monotonic_time(millisecond),

@@ -57,12 +57,6 @@ cli() ->
                     io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
                     cli()
             end;
-        % "pedir_archivo\n" ->
-        %     FileName = string:trim(io:get_line("Nombre del archivo: ")),
-        %     NodeId = string:trim(io:get_line("Node ID: ")),
-        %     Message = io_lib:format("SEARCH_REQUEST ~s ~s~n", [NodeId, FileName]),
-        %     udp_broadcast:send(list_to_binary(Message)),
-        %     cli();
         "buscar\n" ->
             Patron = string:trim(io:get_line("Patrón de archivo: ")),
             buscar_archivos(Patron),
