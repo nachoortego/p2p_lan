@@ -1,11 +1,10 @@
 -module(listen).
--export([start/0]).
+-export([start/1]).
 
 -define(PORT, 12346).
 
-start() ->
-    {ok, Socket} = gen_udp:open(?PORT, [binary, {reuseaddr, true}, {broadcast, true}, {active, true}]),
-    io:format("Escuchando UDP en todas las IPs, puerto ~p...~n", [?PORT]),
+start(Socket) ->
+    io:format("Escuchando UDP en todas las IPs, puerto ~p...~n", [12346]),
     loop(Socket).
 
 loop(Socket) ->
