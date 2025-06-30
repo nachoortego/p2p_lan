@@ -1,7 +1,7 @@
 -module(connect).
 -export([start/0]).
 
--import(filelib, [wildcard/2]).
+-import(filelib, [wildcard/1]).
 -include_lib("kernel/include/file.hrl"). % para acceder a #file_info
 
 %% Inicia el servidor TCP
@@ -61,7 +61,7 @@ handle_message(Msg, Socket) ->
 %% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
-    case wildcard(FullPattern, []) of
+    case wildcard(FullPattern) of
         [] ->
             io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
         Matches ->
