@@ -31,8 +31,18 @@ cli() ->
         "descargar\n" ->
             FileName = string:trim(io:get_line("Nombre del archivo a descargar: ")),
             NodeId = string:trim(io:get_line("Node ID del nodo origen: ")),
-            Nodo = nodo:get_node_info(NodeId),
-            file_download:ask_for_file(FileName, {Nodo#nodo.ip, Nodo#nodo.puerto}),
+            knownNodes ! {get, self()},
+            receive
+                {ok, NodeMap} ->
+                    case maps:is_key(NodeId, NodeMap) of
+                        false ->
+                            io:format("Node ID ~s no encontrado en nodos conocidos.~n", [NodeId]),
+                            cli();
+                        true ->
+                            Nodo = maps:get(NodeId, NodeMap),
+                            file_download:ask_for_file(FileName, {maps:get(ip, Nodo), maps:get(puerto, Nodo)})
+                    end
+            end,
             cli();
         "listar_compartidos\n" ->
             print_compartidos(),
