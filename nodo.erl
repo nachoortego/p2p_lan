@@ -7,34 +7,57 @@ broadcast(Port, Message) ->
   gen_udp:send(Socket, Address, Port, Message),
   gen_udp:close(Socket).
 
-generate_id(InitPid) ->
+generate_id() ->
     Id = lists:map(
             fun(_) ->
                 lists:nth(rand:uniform(62),
                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
             end,
-            lists:seq(1,4)),
-    Msg = "NAME_REQUEST " ++ integer_to_list(Id) ++ "\n",
-    broadcast(12346, Msg),
-    receive
-        {udp, _Socket, _IP, _InPort, Binary} ->
-            Str = binary_to_list(Binary),
-            Myname = integer_to_list(Id),
-            case string:tokens(string:trim(Str), " ") of
-                ["INVALID_NAME", Myname]->
-                    timer:sleep(5000),
-                    generate_id(InitPid);
-                _ ->
-                    Id
+            lists:seq(1, 4)),
+    Msg = "NAME_REQUEST " ++ Id ++ "\n",
+    io:format("Broadcast: ~p~n", [Msg]),
+
+    {ok, Socket} = gen_udp:open(0, [binary, {active, true}, {broadcast, true}]),
+    gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
+
+    StartTime = erlang:monotonic_time(millisecond),
+    Result = wait_response(Socket, Id, StartTime),
+    gen_udp:close(Socket),
+    Result.
+
+wait_response(Socket, Id, StartTime) ->
+    Timeout = 3000,
+    Now = erlang:monotonic_time(millisecond),
+    Elapsed = Now - StartTime,
+    Remaining = Timeout - Elapsed,
+    if
+        Remaining =< 0 ->
+            io:format("Tiempo agotado, usando ID: ~p~n", [Id]),
+            Id;
+        true ->
+            receive
+                {udp, Socket, _IP, _Port, Binary} ->
+                    Str = binary_to_list(Binary),
+                    Tokens = string:tokens(string:trim(Str), " "),
+                    case Tokens of
+                        ["INVALID_NAME", Id] ->
+                            io:format("Nombre inválido detectado: ~p~n", [Id]),
+                            timer:sleep(5000),
+                            generate_id(); % reinicia con otro ID
+                        _ ->
+                            % ignorar si es un NAME_REQUEST propio u otro mensaje
+                            wait_response(Socket, Id, StartTime)
+                    end
+            after Remaining ->
+                io:format("No se recibió INVALID_NAME, usando ID: ~p~n", [Id]),
+                Id
             end
-    after
-        3000 -> Id
     end.
 
 hello(MyId) ->
-    Msg = "HELLO " ++ integer_to_list(MyId) ++ " " ++ integer_to_list(12345) ++ "\n",
+    Msg = "HELLO " ++ MyId ++ " 12543\n",
     io:format("Broadcast: ~p~n", [Msg]),
-    broadcast(12332, Msg),
+    broadcast(12346, Msg),
     timer:sleep(25000),
     hello(MyId).
 
@@ -74,10 +97,9 @@ known_nodes(NodeMap) ->
     end.
 
 init() ->
-    MyId = generate_id(self()),
+    MyId = generate_id(),
     
     GetIdPid = spawn(fun() -> get_id(MyId) end),
-
     register(getId, GetIdPid),
     
     getId ! {id, self()},
