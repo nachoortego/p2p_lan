@@ -16,15 +16,11 @@ Requisitos:
 - Puerto UDP 12346 abierto (para mensajes de descubrimiento)
 - Puerto TCP configurable por nodo
 
-Compilación:
+Compilación y ejecución:
 ```bash
 make
 ```
 
-Ejecución:
-```bash
-make run
-```
 Esto lanza el nodo en modo sin consola (`-noshell`) ejecutando `nodo:init/0`.
 
 Carpetas esperadas:
@@ -44,17 +40,6 @@ CLI – Comandos Disponibles
 | buscar               | Busca un archivo en la red dado su nombre                                   |
 | salir                | Finaliza el nodo.                                                            |
 | help                 | Muestra la lista de comandos disponibles.                                    |
-
-
-Compilación y Pruebas
----------------------
-
-Puede probarse en al menos dos terminales diferentes con:
-```bash
-make run
-```
-
-Y en cada CLI asignar un ID distinto para los nodos, luego verificar nodos conocidos, búsqueda y descarga.
 
 Autores
 -------
