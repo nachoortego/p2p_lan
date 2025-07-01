@@ -81,6 +81,10 @@ cli() ->
             io:format("  listar_descargas - Lista los archivos descargados~n"),
             io:format("  listar_compartidos - Lista los archivos compartidos~n"),
             io:format("  salir - Salir del programa~n"),
+            io:format("  buscar - Buscar archivos en la red~n"),
+            io:format("  descargar - Descargar archivo de algún nodo~n"),
+            io:format("  nodos_conocidos - Muestra los nodos conocidos (ID, IP y puerto)~n"),
+            io:format("  salir - Salir del programa~n"),
             cli();
         _ ->
             io:format("Comando no reconocido.~n"),
@@ -134,7 +138,7 @@ recibir_respuestas(Socket, NodeId) ->
         {ok, Bin} ->
             Lineas = string:split(binary_to_list(Bin), "\n", all),
             lists:foreach(fun(Line) -> imprimir_respuesta(NodeId, Line) end, Lineas),
-            recibir_respuestas(Socket, NodeId); % sigue leyendo
+            recibir_respuestas(Socket, NodeId);
         {error, timeout} -> ok;
         {error, closed} -> ok;
         {error, _} -> ok

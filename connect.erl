@@ -4,7 +4,6 @@
 -import(filelib, [wildcard/1]).
 -include_lib("kernel/include/file.hrl"). % para acceder a #file_info
 
-%% Inicia el servidor TCP
 start() ->
     case gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]) of
         {ok, ListenSocket} ->
@@ -13,34 +12,23 @@ start() ->
             io:format("Error al iniciar escucha TCP: ~p~n", [Reason])
     end.
 
-%% Acepta conexiones entrantes concurrentemente
 accept(ListenSocket) ->
     case gen_tcp:accept(ListenSocket) of
         {ok, Socket} ->
-            spawn(fun() -> handle_connection(Socket) end),
+            spawn(fun() -> handle_connection_loop(Socket) end),
             accept(ListenSocket);
         {error, Reason} ->
             io:format("Error en accept: ~p~n", [Reason])
     end.
 
-handle_connection(Socket) ->
-    % case inet:peername(Socket) of
-    %     {ok, {IP, Port}} ->
-    %         ok
-    %     _ ->
-    %         ok
-    % end,
-    loop(Socket).
-
-loop(Socket) ->
+handle_connection_loop(Socket) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
             Msg = binary_to_list(Data),
-            % io:format("Mensaje recibido: ~s~n", [Msg]),
             handle_message(Msg, Socket),
             loop(Socket);
         {error, closed} ->
-            io:format("Conexión cerrada por el cliente~n", []);
+            ok;
         {error, Reason} ->
             io:format("Error en conexión: ~p~n", [Reason])
     end.
@@ -49,10 +37,8 @@ loop(Socket) ->
 handle_message(Msg, Socket) ->
     case string:tokens(string:trim(Msg), " \n\r") of
         ["SEARCH_REQUEST", NodeId, Pattern] ->
-            % io:format("Recibido SEARCH_REQUEST de ~s con patrón ~s~n", [NodeId, Pattern]),
             send_search_responses(Socket, NodeId, Pattern);
         ["DOWNLOAD_REQUEST", Filename] ->
-            % io:format("Download request para archivo ~s~n", [Filename]),
             send_file:send_file(Socket, Filename);
         _ ->
             io:format("Mensaje no reconocido: ~s~n", [Msg])
@@ -61,11 +47,10 @@ handle_message(Msg, Socket) ->
 %% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
-    % io:format("Buscando archivos que coincidan con ~s~n", [FullPattern]),
     case wildcard(FullPattern) of
         [] ->
             ok;
-            % io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
+            io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
         Matches ->
             lists:foreach(
                 fun(Filename) ->
