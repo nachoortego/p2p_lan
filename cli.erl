@@ -92,12 +92,6 @@ cli() ->
     end.
 
 buscar_archivos(Patron) ->
-    case listar_archivos:listar("Compartida") of
-        {ok, Archs} ->
-            io:format("Coincidencias locales: ~p~n", [filtrar(Patron, Archs)]);
-        _ -> ok
-    end,
-
     getId ! {id, self()},
     receive 
         {ok, MiId} -> ok 
@@ -117,10 +111,6 @@ buscar_archivos(Patron) ->
 
         _ -> io:format("Error al obtener nodos conocidos~n")
     end.
-
-filtrar(Patron, Archs) ->
-    Pattern = filename:join(".", Patron),
-    [A || A <- Archs, filelib:wildcard_match(Pattern, A)].
 
 consulta_tcp(RemoteNodeId, Ip, Port, MiId, Patron) ->
     case gen_tcp:connect(Ip, Port, [binary, {active, false}]) of
