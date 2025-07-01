@@ -2,23 +2,24 @@
 -export([init/0, get_my_ip/0]).
 
 get_my_ip() ->
-    {ok, IFs} = inet:getif(),
-    ValidIP = fun({{A,B,_C,_D}, _, _}) ->
-                  not (A =:= 127 orelse (A =:= 169 andalso B =:= 254))
-              end,
-    case lists:filter(ValidIP, IFs) of
-        [{{A,B,C,D}, _, _}|_] -> {A,B,C,D};
-        _ -> {127,0,0,1}
-    end.
+    {ok, Socket} = gen_udp:open(0, [binary]),
+
+    ok = gen_udp:connect(Socket, {192,168,0,1}, 12345),
+
+    {ok, {MyIP, _}} = inet:sockname(Socket),
+
+    gen_udp:close(Socket),
+    MyIP.
 
 generate_id(Socket) ->
-    Id = lists:map(
-            fun(_) ->
-                lists:nth(rand:uniform(62),
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-            end,
-            lists:seq(1, 4)),
-    
+    % Id = lists:map(
+    %         fun(_) ->
+    %             lists:nth(rand:uniform(62),
+    %                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    %         end,
+    %         lists:seq(1, 4)),
+    Id = "asda",
+
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
 
