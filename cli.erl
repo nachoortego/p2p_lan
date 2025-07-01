@@ -137,13 +137,20 @@ buscar_archivos(Pattern) ->
 
 %% Envía una SEARCH_REQUEST por TCP a un nodo dado
 consulta_tcp(RemoteNodeId, Ip, Port, MyiId, Pattern) ->
+    io:format("DEBUG - Id: ~p~n", [MyiId]),
+    io:format("DEBUG - Pattern: ~p~n", [Pattern]),
     case gen_tcp:connect(Ip, Port, [binary, {active, false}]) of
         {ok, Socket} ->
-            MyIdBin = list_to_binary(MyiId),
-            PatternBin = list_to_binary(Pattern),
-            MsgBin = <<"SEARCH_REQUEST ", MyIdBin/binary, " ", PatternBin/binary, "\n">>,
-            gen_tcp:send(Socket, MsgBin),
-            recibir_respuestas(Socket, RemoteNodeId);
+            try
+                MyIdBin = list_to_binary(MyiId),
+                PatternBin = list_to_binary(Pattern),
+                MsgBin = <<"SEARCH_REQUEST ", MyIdBin/binary, " ", PatternBin/binary, "\n">>,
+                gen_tcp:send(Socket, MsgBin),
+                recibir_respuestas(Socket, RemoteNodeId)
+            catch
+                error:badarg ->
+                    io:format("❌ ERROR al convertir a binario: ~p ~p~n", [MyiId, Pattern])
+            end;
         {error, Reason} ->
             io:format("No se pudo conectar con ~s (~p): ~p~n", [RemoteNodeId, Ip, Reason])
     end.

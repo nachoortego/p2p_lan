@@ -7,11 +7,11 @@
 %% Inicializa la escucha en el puerto 12544 por TCP
 start() ->
     case gen_tcp:listen(12544, [
-    binary,
-    {reuseaddr, true},
-    {active, false},
-    {ip, {0,0,0,0}}  % importante
-]) of
+        binary,
+        {reuseaddr, true},
+        {active, false},
+        {ip, {0,0,0,0}}
+    ]) of
         {ok, ListenSocket} ->
             accept(ListenSocket);
         {error, Reason} ->
