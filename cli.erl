@@ -139,11 +139,11 @@ buscar_archivos(Pattern) ->
 consulta_tcp(RemoteNodeId, Ip, Port, MyiId, Pattern) ->
     case gen_tcp:connect(Ip, Port, [binary, {active, false}]) of
         {ok, Socket} ->
-            Msg = <<"SEARCH_REQUEST ", MyiId/binary, " ", Pattern/binary, "\n">>,
-            % Msg = io_lib:format("SEARCH_REQUEST ~s ~s~n", [MyiId, Pattern]),
-            gen_tcp:send(Socket, Msg),
+            MyIdBin = list_to_binary(MyiId),
+            PatternBin = list_to_binary(Pattern),
+            MsgBin = <<"SEARCH_REQUEST ", MyIdBin/binary, " ", PatternBin/binary, "\n">>,
+            gen_tcp:send(Socket, MsgBin),
             recibir_respuestas(Socket, RemoteNodeId);
-            % gen_tcp:close(Socket);
         {error, Reason} ->
             io:format("No se pudo conectar con ~s (~p): ~p~n", [RemoteNodeId, Ip, Reason])
     end.
