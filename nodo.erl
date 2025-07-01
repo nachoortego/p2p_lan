@@ -3,22 +3,19 @@
 
 get_my_ip() ->
     {ok, Socket} = gen_udp:open(0, [binary]),
-
     ok = gen_udp:connect(Socket, {192,168,0,1}, 12345),
-
     {ok, {MyIP, _}} = inet:sockname(Socket),
-
     gen_udp:close(Socket),
     MyIP.
 
 generate_id(Socket) ->
-    % Id = lists:map(
-    %         fun(_) ->
-    %             lists:nth(rand:uniform(62),
-    %                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-    %         end,
-    %         lists:seq(1, 4)),
-    Id = "asda",
+    Id = lists:map(
+            fun(_) ->
+                lists:nth(rand:uniform(62),
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+            end,
+            lists:seq(1, 4)),
+    % Id = "asda",
 
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
@@ -50,13 +47,6 @@ wait_response(Socket, Id, StartTime) ->
                                 ["INVALID_NAME", Id] ->
                                     timer:sleep(1000),
                                     generate_id(Socket); 
-
-                                ["NAME_REQUEST", Id] -> 
-                                    % Otro nodo pidió el mismo ID al mismo tiempo
-                                    io:format("⚠️  Colisión simultánea detectada con ID ~s~n", [Id]),
-                                    timer:sleep(1000),
-                                    generate_id(Socket);
-
                                 _ ->
                                     wait_response(Socket, Id, StartTime)
                             end

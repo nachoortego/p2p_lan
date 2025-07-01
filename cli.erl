@@ -4,17 +4,27 @@
 print_descargas() -> 
     case listar_archivos:listar("Descargas") of
         {error, Reason} -> 
-            io:format("Error: ~s~n", [Reason]);
+            io:format("Error al listar descargas: ~s~n", [Reason]);
+        [] ->
+            io:format("No hay archivos descargados.~n");
         Archivos -> 
-            io:format("Archivos descargados: ~p~n", [Archivos])
+            io:format("Archivos descargados:~n"),
+            lists:foreach(
+                fun(Archivo) -> io:format("  - ~s~n", [Archivo]) end,
+                Archivos)
     end.
 
 print_compartidos() -> 
     case listar_archivos:listar("Compartida") of
         {error, Reason} -> 
-            io:format("Error: ~s~n", [Reason]);
+            io:format("Error al listar compartidos: ~s~n", [Reason]);
+        [] ->
+            io:format("No hay archivos compartidos.~n");
         Archivos -> 
-            io:format("Archivos compartidos: ~p~n", [Archivos])
+            io:format("Archivos compartidos:~n"),
+            lists:foreach(
+                fun(Archivo) -> io:format("  - ~s~n", [Archivo]) end,
+                Archivos)
     end.
 
 cli() ->
