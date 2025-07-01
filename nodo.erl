@@ -35,7 +35,6 @@ wait_response(Socket, Id, StartTime) ->
     Remaining = Timeout - Elapsed,
     if
         Remaining =< 0 ->
-            % io:format("Tiempo agotado, usando ID: ~p~n", [Id]),
             Id;
         true ->
             MyIP = get_my_ip(),
@@ -58,7 +57,6 @@ wait_response(Socket, Id, StartTime) ->
                     end;
 
                 {error, timeout} -> 
-                    io:format("Tiempo de espera agotado, usando ID: ~p~n", [Id]),
                     Id
             end
     end.
@@ -66,6 +64,7 @@ wait_response(Socket, Id, StartTime) ->
 
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
+    io:format("Enviando mensaje de HELLO: ~s~n", [Msg]),
     gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
     timer:sleep(3000),
     hello_loop(Socket, MyId).
