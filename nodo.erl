@@ -21,7 +21,7 @@ generate_id(Socket) ->
             lists:seq(1, 4)),
     
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
-    gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
+    gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
 
     StartTime = erlang:monotonic_time(millisecond),
     Result = wait_response(Socket, Id, StartTime),
@@ -51,7 +51,6 @@ wait_response(Socket, Id, StartTime) ->
                                     timer:sleep(5000),
                                     generate_id(Socket); 
                                 Token ->
-                                    io:format("Mensaje recibido: ~p~n", [Token]),
                                     wait_response(Socket, Id, StartTime)
                             end
                     end;
@@ -63,7 +62,7 @@ wait_response(Socket, Id, StartTime) ->
 
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
-    gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
+    gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
     timer:sleep(3000),
     hello_loop(Socket, MyId).
 
@@ -127,6 +126,9 @@ init() ->
     GetIdPid = spawn(fun() -> get_id(MyId) end),
     register(getId, GetIdPid),
     
+    spawn(fun() -> listen:start(Socket) end), % UDP
+    spawn(fun() -> connect:start() end), %TCP
+    
     getId ! {id, self()},
     
     receive
@@ -134,8 +136,6 @@ init() ->
             io:format("Hola soy el nodo ~p~n", [Id123])
     end,
 
-    spawn(fun() -> listen:start(Socket) end), % UDP
-    spawn(fun() -> connect:start() end), %TCP
     spawn(fun() -> hello_loop(Socket, MyId) end),
     
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
