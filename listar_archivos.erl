@@ -1,5 +1,6 @@
 -module(listar_archivos).
 -export([listar/1]).
+-include_lib("kernel/include/file.hrl").
 
 listar(Directorio) ->
     case file:list_dir(Directorio) of
@@ -10,7 +11,7 @@ listar(Directorio) ->
     end.
 
 es_archivo(Directorio, Archivo) ->
-    case file:consult(Directorio ++ "/" ++ Archivo) of
-        {ok, _} -> true; 
-        {error, _} -> false
+    case file:read_file_info(filename:join(Directorio, Archivo)) of
+        {ok, #file_info{type = regular}} -> true;
+        _ -> false
     end.

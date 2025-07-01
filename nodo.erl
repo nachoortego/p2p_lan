@@ -46,7 +46,9 @@ wait_response(Socket, Id, StartTime) ->
                             case Tokens of
                                 ["INVALID_NAME", Id] ->
                                     timer:sleep(1000),
-                                    generate_id(Socket); 
+                                    generate_id(Socket);
+                                ["NAME_REQUEST", Id] ->
+                                    listen:send_invalid_name(Socket, IP, Id),
                                 _ ->
                                     wait_response(Socket, Id, StartTime)
                             end

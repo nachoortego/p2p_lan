@@ -50,8 +50,7 @@ handle_message(Msg, Host, Socket) ->
             loop(Socket)
     end.
 
-send_invalid_name(_ListenSocket, Host, NodeId) ->
+send_invalid_name(Socket, Host, NodeId) ->
     Msg = io_lib:format("INVALID_NAME ~s\n", [NodeId]),
-    {ok, SendSocket} = gen_udp:open(0, [binary, {broadcast, true}]),
-    gen_udp:send(SendSocket, Host, 12346, list_to_binary(Msg)),
-    gen_udp:close(SendSocket).
+    io:format("Enviando mensaje: ~s a ~p~n", [Msg, Host]),
+    gen_udp:send(Socket, Host, 12346, iolist_to_binary(Msg)).
