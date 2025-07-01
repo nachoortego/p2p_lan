@@ -50,12 +50,23 @@ cli() ->
         "nodos_conocidos\n" ->
             knownNodes ! {get, self()},
             receive
-                {ok, NodeMap} -> 
-                    io:format("Nodos conocidos: ~p~n", [NodeMap]),
-                    cli();
-                {error, Reason} -> 
-                    io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
-                    cli()
+            {ok, NodeMap} -> 
+                io:format("Nodos conocidos:~n"),
+                maps:fold(
+                    fun(NodeId, Info, _) ->
+                        io:format("  ID: ~s~n    IP: ~p~n    Puerto: ~p~n", [
+                            NodeId,
+                            maps:get(ip, Info),
+                            maps:get(puerto, Info)
+                        ])
+                    end,    
+                    ok,
+                    NodeMap
+                ),
+                cli();
+            {error, Reason} -> 
+                io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
+                cli()
             end;
         "buscar\n" ->
             Patron = string:trim(io:get_line("Patrón de archivo: ")),
