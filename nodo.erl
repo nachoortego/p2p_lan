@@ -122,10 +122,14 @@ known_nodes(NodeMap) ->
 init() ->
     {ok, Socket} = gen_udp:open(12346, [binary, {broadcast, true}, {reuseaddr, true}, {active, false}]),
     MyId = generate_id(Socket),
+
     
     GetIdPid = spawn(fun() -> get_id(MyId) end),
     register(getId, GetIdPid),
     
+    KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
+    register(knownNodes, KnownNodesPid),
+
     spawn(fun() -> listen:start(Socket) end), % UDP
     spawn(fun() -> connect:start() end), %TCP
     
@@ -138,8 +142,6 @@ init() ->
 
     spawn(fun() -> hello_loop(Socket, MyId) end),
     
-    KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
-    register(knownNodes, KnownNodesPid),
     spawn(fun () -> check_nodes() end),
 
     % gen_udp:close(Socket),
