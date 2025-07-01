@@ -1,5 +1,5 @@
 -module(listen).
--export([start/1]).
+-export([start/1, send_invalid_name/3]).
 
 -define(PORT, 12346).
 
@@ -52,5 +52,4 @@ handle_message(Msg, Host, Socket) ->
 
 send_invalid_name(Socket, Host, NodeId) ->
     Msg = io_lib:format("INVALID_NAME ~s\n", [NodeId]),
-    io:format("Enviando mensaje: ~s a ~p~n", [Msg, Host]),
     gen_udp:send(Socket, Host, 12346, iolist_to_binary(Msg)).

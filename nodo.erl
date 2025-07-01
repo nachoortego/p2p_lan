@@ -9,13 +9,13 @@ get_my_ip() ->
     MyIP.
 
 generate_id(Socket) ->
-    Id = lists:map(
-            fun(_) ->
-                lists:nth(rand:uniform(62),
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-            end,
-            lists:seq(1, 4)),
-    % Id = "asda",
+    % Id = lists:map(
+    %         fun(_) ->
+    %             lists:nth(rand:uniform(62),
+    %                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    %         end,
+    %         lists:seq(1, 4)),
+    Id = "AAAA",
 
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
@@ -48,8 +48,9 @@ wait_response(Socket, Id, StartTime) ->
                                     timer:sleep(1000),
                                     generate_id(Socket);
                                 ["NAME_REQUEST", Id] ->
-                                    listen:send_invalid_name(Socket, IP, Id);
-                                _ ->
+                                    listen:send_invalid_name(Socket, IP, Id),
+                                    wait_response(Socket, Id, StartTime);
+                                Token ->
                                     wait_response(Socket, Id, StartTime)
                             end
                     end;
