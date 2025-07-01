@@ -1,5 +1,5 @@
 -module(listen).
--export([start/1]).
+-export([start/1, send_invalid_name/3]).
 
 %% Inicia el loop
 start(Socket) ->
@@ -55,5 +55,4 @@ handle_message(Msg, Host, Socket) ->
 %% Envia un INVALID_NAME <nodo_id> al nodo con un name request incorrecto por unicast
 send_invalid_name(Socket, Host, NodeId) ->
     Msg = io_lib:format("INVALID_NAME ~s\n", [NodeId]),
-    io:format("Enviando mensaje: ~s a ~p~n", [Msg, Host]),
     gen_udp:send(Socket, Host, 12346, iolist_to_binary(Msg)).

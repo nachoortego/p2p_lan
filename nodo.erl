@@ -11,6 +11,7 @@ get_my_ip() ->
 
 %% Genera un id único para el nodo
 generate_id(Socket) ->
+
     %% Id aleatorio de 4 caracteres ascii
     Id = lists:map(
             fun(_) ->
@@ -52,7 +53,8 @@ wait_response(Socket, Id, StartTime) ->
                                     timer:sleep(1000),
                                     generate_id(Socket);
                                 ["NAME_REQUEST", Id] ->
-                                    listen:send_invalid_name(Socket, IP, Id);
+                                    listen:send_invalid_name(Socket, IP, Id),
+                                    wait_response(Socket, Id, StartTime);
                                 _ ->
                                     wait_response(Socket, Id, StartTime) %% Si el mensaje no esta dirigido a su id, sigue esperando
                             end
