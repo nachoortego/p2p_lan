@@ -55,22 +55,26 @@ handle_message(Msg, Socket) ->
     end.
 
 %% Matchea con wildcards los archivos que coinciden con la SEARCH_REQUEST y los envía
-send_search_responses(Socket, NodeId, Pattern) ->
+send_search_responses(Socket, _NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
     case wildcard(FullPattern) of
         %% No hay coincidencias
         [] ->
-            io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
+            ok;
         %% Recorre la lista de archivos y los envía por TCP al nodo que hizo la SEARCH_REQUEST copn su tamaño y nombre
         Matches ->
             lists:foreach(
                 fun(Filename) ->
                     case file:read_file_info(Filename) of
                         {ok, FileInfo} ->
-                            Size = FileInfo#file_info.size,
-                            BaseName = filename:basename(Filename),
-                            Response = io_lib:format("SEARCH_RESPONSE ~s ~s ~p~n", [NodeId, BaseName, Size]),
-                            gen_tcp:send(Socket, lists:flatten(Response));
+                            getId ! {id, self()},
+                            receive
+                                {ok, Id} -> 
+                                    Size = FileInfo#file_info.size,
+                                    BaseName = filename:basename(Filename),
+                                    Response = io_lib:format("SEARCH_RESPONSE ~s ~s ~p~n", [Id, BaseName, Size]),
+                                    gen_tcp:send(Socket, lists:flatten(Response))
+                            end;
                         {error, Reason} ->
                             io:format("Error leyendo info de ~s: ~p~n", [Filename, Reason])
                     end
