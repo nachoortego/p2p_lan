@@ -68,8 +68,8 @@ wait_response(Socket, Id, StartTime) ->
 %% Envia HELLO <id_nodo> <puerto_tcp> cada 15s por el canal UDP
 hello_loop(Socket, MyId) ->
     %% Arma y envía el mensaje HELLO por broadcast
-    Msg = "HELLO " ++ MyId ++ " 12544\n",
-    gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
+    Msg = "HELLO " ++ MyId ++ " 12345\n",
+    gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
     timer:sleep(15000),
     hello_loop(Socket, MyId).
 
