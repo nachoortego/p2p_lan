@@ -40,7 +40,8 @@ CLI – Comandos Disponibles
 | listar_descargas     | Muestra los archivos descargados.                                           |
 | listar_compartidos   | Muestra los archivos disponibles para compartir.                            |
 | nodos_conocidos      | Lista los nodos descubiertos por la red con su IP y puerto TCP.             |
-| pedir_archivo        | Realiza un broadcast para buscar un archivo por nombre e ID de nodo.        |
+| descargar            | Descarga un archivo dado el nombre del archivo y el nodo que lo tiene       |
+| buscar               | Busca un archivo en la red dado su nombre                                   |
 | salir                | Finaliza el nodo.                                                            |
 | help                 | Muestra la lista de comandos disponibles.                                    |
 
