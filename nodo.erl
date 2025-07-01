@@ -117,6 +117,9 @@ known_nodes(NodeMap) ->
                 false -> From ! {not_exists, NodeId}
             end,
             known_nodes(NodeMap)
+        _ ->
+            io:format("Mensaje desconocido en known_nodes: ~p~n", [NodeMap]),
+            known_nodes(NodeMap)
     end.
 
 init() ->
@@ -136,13 +139,12 @@ init() ->
         {ok, Id123} ->
             io:format("Hola soy el nodo ~p~n", [Id123])
     end,
-    
+
+
+    time:sleep(1000),
     spawn(fun() -> listen:start(Socket) end), % UDP
     spawn(fun() -> connect:start() end), %TCP
-    
-
     spawn(fun() -> hello_loop(Socket, MyId) end),
-    
     spawn(fun () -> check_nodes() end),
 
     % gen_udp:close(Socket),
