@@ -20,7 +20,7 @@ generate_id(Socket) ->
             end,
             lists:seq(1, 4)),
 
-    %% Arma y envía el mensaje NAME_REQUEST
+    %% Arma y envía el mensaje NAME_REQUEST por broadcast
     Msg = "NAME_REQUEST " ++ Id ++ "\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
 
@@ -67,6 +67,7 @@ wait_response(Socket, Id, StartTime) ->
 
 %% Envia HELLO <id_nodo> <puerto_tcp> cada 15s por el canal UDP
 hello_loop(Socket, MyId) ->
+    %% Arma y envía el mensaje HELLO por broadcast
     Msg = "HELLO " ++ MyId ++ " 12544\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
     timer:sleep(15000),
