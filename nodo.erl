@@ -82,7 +82,7 @@ known_nodes(NodeMap) ->
         {new, NodeId, Port, NodeIP} ->
             getId ! {id, self()},
             receive
-                {ok, NodeId} -> ok;
+                {ok, NodeId} -> known_nodes(NodeMap);
                 {ok, _} ->
                     case maps:is_key(NodeId, NodeMap) of
                         true ->

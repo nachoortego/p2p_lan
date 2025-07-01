@@ -24,12 +24,7 @@ loop(Socket) ->
 handle_message(Msg, Host, Socket) ->
     case string:tokens(string:trim(Msg), " \n") of
         ["HELLO", NodeId, TcpPort] ->
-            case whereis(knownNodes) of
-                undefined ->
-                    io:format("⚠️  knownNodes aún no está disponible~n");
-                Pid ->
-                    Pid ! {new, NodeId, list_to_integer(TcpPort), Host}
-            end,
+            knownNodes ! {new, NodeId, list_to_integer(TcpPort), Host},
             loop(Socket);
 
         ["NAME_REQUEST", ReqId] ->
