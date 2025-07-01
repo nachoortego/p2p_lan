@@ -144,7 +144,7 @@ recibir_respuestas(Socket, NodeId) ->
         {error, _} -> ok
     end.
 
-imprimir_respuesta(_NodeId, "") -> io:format("Respuesta vacía recibida~n");
+imprimir_respuesta(_NodeId, "") -> ok;
 imprimir_respuesta(NodeId, Line) ->
     case string:tokens(Line, " ") of
         ["SEARCH_RESPONSE", _, Nombre, TamañoStr] ->
