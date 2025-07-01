@@ -130,15 +130,16 @@ init() ->
     KnownNodesPid = spawn(fun() -> known_nodes(#{}) end),
     register(knownNodes, KnownNodesPid),
 
-    spawn(fun() -> listen:start(Socket) end), % UDP
-    spawn(fun() -> connect:start() end), %TCP
-    
     getId ! {id, self()},
     
     receive
         {ok, Id123} ->
             io:format("Hola soy el nodo ~p~n", [Id123])
     end,
+    
+    spawn(fun() -> listen:start(Socket) end), % UDP
+    spawn(fun() -> connect:start() end), %TCP
+    
 
     spawn(fun() -> hello_loop(Socket, MyId) end),
     
