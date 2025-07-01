@@ -11,7 +11,6 @@ get_my_ip() ->
         _ -> {127,0,0,1}
     end.
 
-
 generate_id(Socket) ->
     Id = lists:map(
             fun(_) ->
@@ -29,7 +28,7 @@ generate_id(Socket) ->
     Result.
 
 wait_response(Socket, Id, StartTime) ->
-    Timeout = 3000,
+    Timeout = 10000,
     Now = erlang:monotonic_time(millisecond),
     Elapsed = Now - StartTime,
     Remaining = Timeout - Elapsed,
@@ -42,14 +41,21 @@ wait_response(Socket, Id, StartTime) ->
                 {ok, {IP, _Port, Binary}} ->
                     case IP =:= MyIP of
                         true -> 
-                            wait_response(Socket, Id, StartTime); % No hace nada, vuelve a esperar
+                            wait_response(Socket, Id, StartTime); % Ignora propio mensaje
                         false -> 
                             Str = binary_to_list(Binary),
                             Tokens = string:tokens(string:trim(Str), " "),
                             case Tokens of
                                 ["INVALID_NAME", Id] ->
-                                    timer:sleep(5000),
+                                    timer:sleep(1000),
                                     generate_id(Socket); 
+
+                                ["NAME_REQUEST", Id] -> 
+                                    % Otro nodo pidió el mismo ID al mismo tiempo
+                                    io:format("⚠️  Colisión simultánea detectada con ID ~s~n", [Id]),
+                                    timer:sleep(1000),
+                                    generate_id(Socket);
+
                                 _ ->
                                     wait_response(Socket, Id, StartTime)
                             end
@@ -63,7 +69,7 @@ wait_response(Socket, Id, StartTime) ->
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
     gen_udp:send(Socket, {192, 168, 0, 255}, 12346, Msg),
-    timer:sleep(3000),
+    timer:sleep(15000),
     hello_loop(Socket, MyId).
 
 get_id(Id) ->
@@ -100,10 +106,10 @@ known_nodes(NodeMap) ->
             end;
         {checkNodes} ->
             Now = erlang:monotonic_time(millisecond),
-            TenSeconds = 10000,
+            Time = 45000,
             FilteredMap = maps:filter(
                 fun(_Key, NodeInfo) ->
-                    Now - maps:get(last_update, NodeInfo) =< TenSeconds
+                    Now - maps:get(last_update, NodeInfo) =< Time
                 end,
                 NodeMap
             ),

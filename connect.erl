@@ -2,7 +2,7 @@
 -export([start/0]).
 
 -import(filelib, [wildcard/1]).
--include_lib("kernel/include/file.hrl"). % para acceder a #file_info
+-include_lib("kernel/include/file.hrl").
 
 start() ->
     case gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]) of
@@ -33,7 +33,6 @@ handle_connection_loop(Socket) ->
             io:format("Error en conexión: ~p~n", [Reason])
     end.
 
-%% Analiza y responde a mensajes
 handle_message(Msg, Socket) ->
     case string:tokens(string:trim(Msg), " \n\r") of
         ["SEARCH_REQUEST", NodeId, Pattern] ->
@@ -44,7 +43,6 @@ handle_message(Msg, Socket) ->
             io:format("Mensaje no reconocido: ~s~n", [Msg])
     end.
 
-%% Genera y envía respuestas de búsqueda
 send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
     case wildcard(FullPattern) of

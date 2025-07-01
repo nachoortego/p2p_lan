@@ -69,8 +69,8 @@ cli() ->
                 cli()
             end;
         "buscar\n" ->
-            Patron = string:trim(io:get_line("Patrón de archivo: ")),
-            buscar_archivos(Patron),
+            Pattern = string:trim(io:get_line("Patrón de archivo: ")),
+            buscar_archivos(Pattern),
             cli();
         "salir\n" ->
             io:format("Saliendo...~n"),
@@ -91,10 +91,10 @@ cli() ->
             cli()
     end.
 
-buscar_archivos(Patron) ->
+buscar_archivos(Pattern) ->
     getId ! {id, self()},
     receive 
-        {ok, MiId} -> ok 
+        {ok, MyiId} -> ok 
     end,
 
     knownNodes ! {get, self()},
@@ -104,7 +104,7 @@ buscar_archivos(Patron) ->
                 fun({NodeId, InfoMap}) ->
                     Ip = maps:get(ip, InfoMap),
                     Port = maps:get(puerto, InfoMap),
-                    spawn(fun() -> consulta_tcp(NodeId, Ip, Port, MiId, Patron) end)
+                    spawn(fun() -> consulta_tcp(NodeId, Ip, Port, MyiId, Pattern) end)
                 end,
                 maps:to_list(NodeMap)
             );
@@ -112,10 +112,10 @@ buscar_archivos(Patron) ->
         _ -> io:format("Error al obtener nodos conocidos~n")
     end.
 
-consulta_tcp(RemoteNodeId, Ip, Port, MiId, Patron) ->
+consulta_tcp(RemoteNodeId, Ip, Port, MyiId, Pattern) ->
     case gen_tcp:connect(Ip, Port, [binary, {active, false}]) of
         {ok, Socket} ->
-            Msg = io_lib:format("SEARCH_REQUEST ~s ~s~n", [MiId, Patron]),
+            Msg = io_lib:format("SEARCH_REQUEST ~s ~s~n", [MyiId, Pattern]),
             gen_tcp:send(Socket, lists:flatten(Msg)),
             recibir_respuestas(Socket, RemoteNodeId);
             % gen_tcp:close(Socket);
