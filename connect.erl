@@ -5,7 +5,12 @@
 -include_lib("kernel/include/file.hrl").
 
 start() ->
-    case gen_tcp:listen(12544, [binary, {packet, 0}, {reuseaddr, true}, {active, false}]) of
+    case gen_tcp:listen(12544, [
+    binary,
+    {reuseaddr, true},
+    {active, false},
+    {ip, {0,0,0,0}}  % importante
+]) of
         {ok, ListenSocket} ->
             accept(ListenSocket);
         {error, Reason} ->
