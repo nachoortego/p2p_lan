@@ -6,7 +6,7 @@
 
 %% Inicializa la escucha en el puerto 12544 por TCP
 start() ->
-    case gen_tcp:listen(12544, [
+    case gen_tcp:listen(12345, [
     binary,
     {reuseaddr, true},
     {active, false},
