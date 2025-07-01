@@ -50,19 +50,24 @@ cli() ->
         "nodos_conocidos\n" ->
             knownNodes ! {get, self()},
             receive
-                {ok, NodeMap} -> 
-                    io:format("Nodos conocidos: ~p~n", [NodeMap]),
-                    cli();
-                {error, Reason} -> 
-                    io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
-                    cli()
+            {ok, NodeMap} -> 
+                io:format("Nodos conocidos:~n"),
+                maps:fold(
+                    fun(NodeId, Info, _) ->
+                        io:format("  ID: ~s~n    IP: ~p~n    Puerto: ~p~n", [
+                            NodeId,
+                            maps:get(ip, Info),
+                            maps:get(puerto, Info)
+                        ])
+                    end,    
+                    ok,
+                    NodeMap
+                ),
+                cli();
+            {error, Reason} -> 
+                io:format("Error al obtener nodos conocidos: ~s~n", [Reason]),
+                cli()
             end;
-        "pedir_archivo\n" ->
-            FileName = string:trim(io:get_line("Nombre del archivo: ")),
-            NodeId = string:trim(io:get_line("Node ID: ")),
-            Message = io_lib:format("SEARCH_REQUEST ~s ~s~n", [NodeId, FileName]),
-            udp_broadcast:send(list_to_binary(Message)),
-            cli();
         "buscar\n" ->
             Patron = string:trim(io:get_line("Patrón de archivo: ")),
             buscar_archivos(Patron),
@@ -76,6 +81,10 @@ cli() ->
             io:format("  listar_descargas - Lista los archivos descargados~n"),
             io:format("  listar_compartidos - Lista los archivos compartidos~n"),
             io:format("  salir - Salir del programa~n"),
+            io:format("  buscar - Buscar archivos en la red~n"),
+            io:format("  descargar - Descargar archivo de algún nodo~n"),
+            io:format("  nodos_conocidos - Muestra los nodos conocidos (ID, IP y puerto)~n"),
+            io:format("  salir - Salir del programa~n"),
             cli();
         _ ->
             io:format("Comando no reconocido.~n"),
@@ -83,16 +92,16 @@ cli() ->
     end.
 
 buscar_archivos(Patron) ->
-    %% Archivos locales
     case listar_archivos:listar("Compartida") of
         {ok, Archs} ->
             io:format("Coincidencias locales: ~p~n", [filtrar(Patron, Archs)]);
         _ -> ok
     end,
 
-    %% Consultar nodos conocidos
     getId ! {id, self()},
-    receive {ok, MiId} -> ok end,
+    receive 
+        {ok, MiId} -> ok 
+    end,
 
     knownNodes ! {get, self()},
     receive
@@ -110,7 +119,6 @@ buscar_archivos(Patron) ->
     end.
 
 filtrar(Patron, Archs) ->
-    %% Solo devuelve los archivos que matchean el patrón (wildcard)
     Pattern = filename:join(".", Patron),
     [A || A <- Archs, filelib:wildcard_match(Pattern, A)].
 
@@ -130,7 +138,7 @@ recibir_respuestas(Socket, NodeId) ->
         {ok, Bin} ->
             Lineas = string:split(binary_to_list(Bin), "\n", all),
             lists:foreach(fun(Line) -> imprimir_respuesta(NodeId, Line) end, Lineas),
-            recibir_respuestas(Socket, NodeId); % sigue leyendo
+            recibir_respuestas(Socket, NodeId);
         {error, timeout} -> ok;
         {error, closed} -> ok;
         {error, _} -> ok
