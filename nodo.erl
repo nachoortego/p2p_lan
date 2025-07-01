@@ -48,7 +48,7 @@ wait_response(Socket, Id, StartTime) ->
                                     timer:sleep(1000),
                                     generate_id(Socket);
                                 ["NAME_REQUEST", Id] ->
-                                    listen:send_invalid_name(Socket, IP, Id),
+                                    listen:send_invalid_name(Socket, IP, Id);
                                 _ ->
                                     wait_response(Socket, Id, StartTime)
                             end
