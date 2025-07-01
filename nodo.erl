@@ -50,7 +50,9 @@ wait_response(Socket, Id, StartTime) ->
                             case Tokens of
                                 ["INVALID_NAME", Id] -> %% Si el mensaje INVALID_NAME esta dirigido a su id, espera 1s y genera otro
                                     timer:sleep(1000),
-                                    generate_id(Socket); 
+                                    generate_id(Socket);
+                                ["NAME_REQUEST", Id] ->
+                                    listen:send_invalid_name(Socket, IP, Id);
                                 _ ->
                                     wait_response(Socket, Id, StartTime) %% Si el mensaje no esta dirigido a su id, sigue esperando
                             end
