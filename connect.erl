@@ -26,7 +26,7 @@ handle_connection_loop(Socket) ->
         {ok, Data} ->
             Msg = binary_to_list(Data),
             handle_message(Msg, Socket),
-            loop(Socket);
+            handle_connection_loop(Socket);
         {error, closed} ->
             ok;
         {error, Reason} ->
@@ -49,7 +49,6 @@ send_search_responses(Socket, NodeId, Pattern) ->
     FullPattern = filename:join("./Compartida", Pattern),
     case wildcard(FullPattern) of
         [] ->
-            ok;
             io:format("No se encontraron archivos que coincidan con ~s~n", [Pattern]);
         Matches ->
             lists:foreach(

@@ -50,7 +50,7 @@ wait_response(Socket, Id, StartTime) ->
                                 ["INVALID_NAME", Id] ->
                                     timer:sleep(5000),
                                     generate_id(Socket); 
-                                Token ->
+                                _ ->
                                     wait_response(Socket, Id, StartTime)
                             end
                     end;
