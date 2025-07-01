@@ -65,7 +65,11 @@ wait_response(Socket, Id, StartTime) ->
 hello_loop(Socket, MyId) ->
     Msg = "HELLO " ++ MyId ++ " 12544\n",
     io:format("Enviando mensaje de HELLO: ~s~n", [Msg]),
-    gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
+    Ok = gen_udp:send(Socket, {255, 255, 255, 255}, 12346, Msg),
+    case Ok of
+        ok -> io:format("Mensaje HELLO enviado~n");
+        {error, Reason} -> io:format("Error al enviar mensaje HELLO: ~p~n", [Reason])
+    end,
     timer:sleep(3000),
     hello_loop(Socket, MyId).
 
