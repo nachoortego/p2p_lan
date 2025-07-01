@@ -139,7 +139,9 @@ known_nodes(NodeMap) ->
 
 init() ->
     %% Abre un socket UDP en el puerto 12346 y genera su id
+    io:format("Iniciando nodo...~n"),
     {ok, Socket} = gen_udp:open(12346, [binary, {broadcast, true}, {reuseaddr, true}, {active, false}]),
+    io:format("Generando ID...~n"),
     MyId = generate_id(Socket),
 
     %% Inicializa el proceso getId
